@@ -1,0 +1,109 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>TV Info Panel</title>
+    <link rel="stylesheet" href="/styles.css" />
+  </head>
+  <body data-layout="overview">
+    <div class="app-shell">
+      <header class="topbar">
+        <div class="brand-block">
+          <div class="eyebrow">Office wallboard</div>
+          <h1 id="dashboard-title">TV Info Panel</h1>
+        </div>
+        <div class="layout-switcher">
+          <div class="layout-copy">
+            <span class="metric-label">Layout</span>
+            <strong id="layout-name">Overview</strong>
+          </div>
+          <button id="next-layout-button" class="layout-button" type="button">Next layout</button>
+        </div>
+      </header>
+
+      <main id="dashboard" class="dashboard">
+        <section class="panel panel--time" id="panel-time">
+          <div class="panel-header">
+            <h2>Time</h2>
+            <span class="panel-meta">Live</span>
+          </div>
+          <div class="time-grid">
+            <div class="time-block time-block--primary">
+              <div class="metric-label">Charleston</div>
+              <div id="clock" class="metric-value">--:--</div>
+              <div id="date" class="metric-subvalue">Loading...</div>
+            </div>
+            <div class="time-block time-block--countdown">
+              <div class="metric-label">Until 5pm</div>
+              <div id="workday-countdown" class="metric-value metric-value--countdown">00:00:00</div>
+            </div>
+          </div>
+          <div id="timezone-clocks" class="timezone-clocks"></div>
+        </section>
+
+        <section class="panel panel--weather" id="panel-weather">
+          <div class="panel-header">
+            <h2>Charleston Weather</h2>
+            <span id="weather-meta" class="panel-meta">Loading...</span>
+          </div>
+          <div id="weather-current" class="weather-current">Loading weather...</div>
+          <div id="weather-details" class="weather-details"></div>
+          <div id="weather-hours" class="weather-hours"></div>
+        </section>
+
+        <section class="panel panel--stocks" id="panel-stocks">
+          <div class="panel-header">
+            <h2>Market Watch</h2>
+            <span id="stocks-meta" class="panel-meta">Loading...</span>
+          </div>
+          <div id="stocks-grid" class="stocks-grid"></div>
+        </section>
+
+        <section class="panel panel--quotes" id="panel-quotes">
+          <div class="panel-header">
+            <h2>Quote of the Day</h2>
+            <span id="quotes-meta" class="panel-meta">Daily</span>
+          </div>
+          <div id="quote-card" class="quote-card"></div>
+          <div id="bible-card" class="bible-card"></div>
+        </section>
+
+        <section class="panel panel--telegram" id="panel-telegram">
+          <div class="panel-header">
+            <div>
+              <h2>Telegram Board</h2>
+              <p class="panel-caption">Use <code>/add your text</code> and <code>/remove id</code>.</p>
+            </div>
+            <span id="telegram-meta" class="panel-meta">Loading...</span>
+          </div>
+          <p id="telegram-status" class="status-message"></p>
+          <div id="telegram-list" class="telegram-list"></div>
+        </section>
+
+        <section class="panel panel--calendar" id="panel-calendar">
+          <div class="panel-header">
+            <div>
+              <h2>Combined Calendars</h2>
+              <p class="panel-caption">Merged agenda built from Paul, Alexa, Family, Marc, and Nicole.</p>
+            </div>
+            <span id="calendar-meta" class="panel-meta">Loading...</span>
+          </div>
+          <p id="calendar-status" class="status-message"></p>
+          <div id="calendar-sources" class="calendar-sources"></div>
+          <div class="calendar-frame-wrap">
+            <iframe
+              id="calendar-frame"
+              class="calendar-frame"
+              src="about:blank"
+              title="Combined calendar"
+              loading="lazy">
+            </iframe>
+          </div>
+        </section>
+      </main>
+    </div>
+
+    <script type="module" src="/app.js"></script>
+  </body>
+</html>

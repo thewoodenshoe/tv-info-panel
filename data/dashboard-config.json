@@ -1,0 +1,101 @@
+{
+  "title": "Paul's Office Panel",
+  "timezone": "America/New_York",
+  "workdayEnd": "17:00:00",
+  "timeZones": [
+    {
+      "label": "Alabama",
+      "shortLabel": "CDT",
+      "timeZone": "America/Chicago"
+    },
+    {
+      "label": "San Francisco",
+      "shortLabel": "SFO",
+      "timeZone": "America/Los_Angeles"
+    },
+    {
+      "label": "Mountain",
+      "shortLabel": "MT",
+      "timeZone": "America/Denver"
+    }
+  ],
+  "location": {
+    "label": "Charleston, SC",
+    "latitude": 32.7765,
+    "longitude": -79.9311
+  },
+  "tide": {
+    "label": "Charleston Harbor",
+    "stationId": "8665530"
+  },
+  "stocks": [
+    {
+      "symbol": "MSTR",
+      "label": "MicroStrategy",
+      "quoteSymbol": "MSTR"
+    },
+    {
+      "symbol": "BTC",
+      "label": "Bitcoin",
+      "quoteSymbol": "BTC-USD"
+    },
+    {
+      "symbol": "ETH",
+      "label": "Ethereum",
+      "quoteSymbol": "ETH-USD"
+    },
+    {
+      "symbol": "MSTR 200C",
+      "label": "MSTR $200 Call",
+      "quoteSymbol": "MSTR270617C00200000",
+      "averageCost": 54,
+      "averageCostLabel": "$54.00 avg cost"
+    }
+  ],
+  "calendars": [
+    {
+      "label": "Paul",
+      "embedUrl": "https://calendar.google.com/calendar/embed?src=stewart.paul%40gmail.com&ctz=America%2FNew_York",
+      "color": "#69b3ff"
+    },
+    {
+      "label": "Alexa",
+      "embedUrl": "https://calendar.google.com/calendar/embed?src=cf3a6110044b35d3bfed156f9b5f78c92b21e309a64ce4a15354e1d9422a984d%40group.calendar.google.com&ctz=America%2FNew_York",
+      "color": "#8b5cf6"
+    },
+    {
+      "label": "Family",
+      "embedUrl": "https://calendar.google.com/calendar/embed?src=240fc3549d1fb52183bfb275865d1561f73af2d7c7bb4abfe185974dfb66974a%40group.calendar.google.com&ctz=America%2FNew_York",
+      "color": "#22c55e"
+    },
+    {
+      "label": "Marc",
+      "embedUrl": "https://calendar.google.com/calendar/embed?src=d7c82d900dfd0756d1b74ad285c2e8fdf3cb411c60e64ae9174cac7773e2e6df%40group.calendar.google.com&ctz=America%2FNew_York",
+      "color": "#f97316"
+    },
+    {
+      "label": "Nicole",
+      "embedUrl": "https://calendar.google.com/calendar/embed?src=stewart.p.nicole%40gmail.com&ctz=America%2FNew_York",
+      "color": "#ec4899"
+    }
+  ],
+  "notes": [
+    "Keep this page high contrast and readable from across the office.",
+    "Prefer server-side fetches for private integrations instead of TV-side logins.",
+    "Add Fire TV kiosk mode after the local browser version feels good."
+  ],
+  "fallbackCalendarEvents": [
+    {
+      "title": "Connect Google Calendar ICS feed",
+      "start": "2026-04-24T09:00:00-04:00",
+      "end": "2026-04-24T09:30:00-04:00",
+      "location": "README setup"
+    },
+    {
+      "title": "Tune dashboard layout for TV distance",
+      "start": "2026-04-24T11:00:00-04:00",
+      "end": "2026-04-24T11:45:00-04:00",
+      "location": "Local browser"
+    }
+  ]
+}

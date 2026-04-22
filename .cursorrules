@@ -1,0 +1,22 @@
+# TV Info Panel — Repo Rules
+
+## Product intent
+- Keep this repo simple: one TV-friendly dashboard page with a few useful panels.
+- Favor readability from across a room over dense information.
+- Prefer boring server-side integrations for private data instead of TV-side auth.
+
+## Local-first workflow
+- Build and verify locally before discussing Ubuntu deployment.
+- The default local URL is `http://localhost:3030`.
+- Calendar should degrade cleanly to sample/fallback data when no private ICS URL is configured.
+
+## Deployment guidance
+- Suggested Ubuntu target path: `~/projects/tv-info-panel`
+- Normal deploy flow: local edit -> push to GitHub -> pull on Ubuntu
+- Keep runtime simple: `npm start` or `docker compose up -d`
+- Fire TV should point to the hosted dashboard URL using a kiosk browser such as Fully Kiosk Browser
+
+## Engineering guidance
+- Avoid adding a heavyweight frontend framework unless the simple HTML/JS app becomes limiting.
+- Keep secrets in `.env`, never in committed config files.
+- Keep panel fetches server-side when tokens, cookies, or private feeds are involved.

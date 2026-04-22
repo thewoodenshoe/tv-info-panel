@@ -1,0 +1,19 @@
+{
+  "name": "tv-info-panel",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "Lightweight office TV dashboard with weather, stocks, calendar, and notes.",
+  "scripts": {
+    "dev": "node --watch server/server.js",
+    "start": "node server/server.js"
+  },
+  "engines": {
+    "node": ">=20"
+  },
+  "dependencies": {
+    "dotenv": "^17.4.2",
+    "express": "^5.2.1",
+    "node-ical": "^0.26.0"
+  }
+}
