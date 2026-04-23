@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">Office TV Panel</string>
+    <string name="error_title">Dashboard unavailable</string>
+    <string name="error_message">Check the Ubuntu server URL and network access, then retry.</string>
+    <string name="retry">Retry</string>
+</resources>

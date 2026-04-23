@@ -1,0 +1,60 @@
+<?xml version="1.0" encoding="utf-8"?>
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/root"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="#050816">
+
+    <WebView
+        android:id="@+id/webView"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:importantForAutofill="no"
+        android:overScrollMode="never"
+        android:scrollbarStyle="outsideOverlay" />
+
+    <LinearLayout
+        android:id="@+id/errorView"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:background="#E6050816"
+        android:gravity="center"
+        android:orientation="vertical"
+        android:padding="48dp"
+        android:visibility="gone">
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="@string/error_title"
+            android:textColor="#F8FAFC"
+            android:textSize="28sp"
+            android:textStyle="bold" />
+
+        <TextView
+            android:id="@+id/errorMessage"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="12dp"
+            android:gravity="center"
+            android:maxWidth="720dp"
+            android:text="@string/error_message"
+            android:textColor="#CBD5E1"
+            android:textSize="18sp" />
+
+        <Button
+            android:id="@+id/retryButton"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="20dp"
+            android:backgroundTint="#2563EB"
+            android:paddingLeft="24dp"
+            android:paddingTop="14dp"
+            android:paddingRight="24dp"
+            android:paddingBottom="14dp"
+            android:text="@string/retry"
+            android:textAllCaps="false"
+            android:textColor="#FFFFFF" />
+    </LinearLayout>
+
+</FrameLayout>

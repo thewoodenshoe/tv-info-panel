@@ -27,9 +27,19 @@ function contrastRatio(foreground, background) {
   return (lighter + 0.05) / (darker + 0.05);
 }
 
-export async function expectNoClip(page, selector) {
+function resolveLocator(target, selector) {
+  if (typeof selector === 'string') return target.locator(selector).first();
+  return target;
+}
+
+function resolveLabel(selector, fallback = 'locator') {
+  return typeof selector === 'string' ? selector : fallback;
+}
+
+export async function expectNoClip(target, selector, label = resolveLabel(selector)) {
   const tolerancePx = 6;
-  const metrics = await page.locator(selector).first().evaluate((element) => {
+  const locator = resolveLocator(target, selector);
+  const metrics = await locator.evaluate((element) => {
     const parent = element.closest('.panel');
     const style = window.getComputedStyle(element);
     const parentRect = parent?.getBoundingClientRect();
@@ -52,13 +62,21 @@ export async function expectNoClip(page, selector) {
     };
   });
 
-  expect(metrics.width, `${selector} width`).toBeGreaterThan(0);
-  expect(metrics.height, `${selector} height`).toBeGreaterThan(0);
-  expect(metrics.scrollWidth, `${selector} horizontal overflow`).toBeLessThanOrEqual(metrics.clientWidth + tolerancePx);
-  expect(metrics.scrollHeight, `${selector} vertical overflow`).toBeLessThanOrEqual(metrics.clientHeight + tolerancePx);
-  expect(metrics.visible, `${selector} visibility`).toBeTruthy();
-  expect(metrics.opacity, `${selector} opacity`).toBeGreaterThan(0);
-  expect(metrics.inPanelBounds, `${selector} panel bounds`).toBeTruthy();
+  expect(metrics.width, `${label} width`).toBeGreaterThan(0);
+  expect(metrics.height, `${label} height`).toBeGreaterThan(0);
+  expect(metrics.scrollWidth, `${label} horizontal overflow`).toBeLessThanOrEqual(metrics.clientWidth + tolerancePx);
+  expect(metrics.scrollHeight, `${label} vertical overflow`).toBeLessThanOrEqual(metrics.clientHeight + tolerancePx);
+  expect(metrics.visible, `${label} visibility`).toBeTruthy();
+  expect(metrics.opacity, `${label} opacity`).toBeGreaterThan(0);
+  expect(metrics.inPanelBounds, `${label} panel bounds`).toBeTruthy();
+}
+
+export async function expectAllNoClip(page, selector) {
+  const locator = page.locator(selector);
+  const count = await locator.count();
+  for (let index = 0; index < count; index += 1) {
+    await expectNoClip(locator.nth(index), undefined, `${selector}[${index}]`);
+  }
 }
 
 export async function expectContrast(page, selector, minimum = 3) {

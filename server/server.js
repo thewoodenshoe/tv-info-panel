@@ -4,6 +4,7 @@ import { fileURLToPath } from 'node:url';
 
 import dotenv from 'dotenv';
 import express from 'express';
+import ical from 'node-ical';
 
 dotenv.config();
 
@@ -11,8 +12,10 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 const rootDir = path.resolve(__dirname, '..');
 const publicDir = path.join(rootDir, 'public');
-const configPath = path.join(rootDir, 'data', 'dashboard-config.json');
-const telegramStorePath = path.join(rootDir, 'data', 'telegram-panel.json');
+const defaultConfigPath = path.join(rootDir, 'data', 'dashboard-config.json');
+const localConfigPath = path.join(rootDir, 'data', 'dashboard-config.local.json');
+const defaultTelegramStorePath = path.join(rootDir, 'data', 'telegram-panel.local.json');
+const legacyTelegramStorePath = path.join(rootDir, 'data', 'telegram-panel.json');
 
 const PORT = Number.parseInt(process.env.PORT || '3030', 10);
 const TELEGRAM_BOT_TOKEN = process.env.TELEGRAM_BOT_TOKEN?.trim() || '';
@@ -78,24 +81,70 @@ const DAILY_BIBLE_QUOTES = [
   { reference: 'Psalm 46:10', text: 'Be still, and know that I am God.' },
 ];
 
+const CALENDAR_CACHE_TTL_MS = 5 * 60 * 1000;
+const CALENDAR_LOOKAHEAD_DAYS = 7;
+const CALENDAR_MAX_EVENTS = 18;
+
 let telegramState = null;
 let telegramPollStarted = false;
 let telegramPollTimer = null;
-let quoteExtendedFetchWarned = false;
+let calendarCache = {
+  key: '',
+  expiresAt: 0,
+  value: null,
+};
+
+function resolveProjectPath(value, fallback) {
+  if (!value?.trim()) return fallback;
+  return path.isAbsolute(value) ? value : path.resolve(rootDir, value);
+}
+
+async function fileExists(filePath) {
+  try {
+    await fs.access(filePath);
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+async function resolveConfigPath() {
+  const configuredPath = resolveProjectPath(process.env.DASHBOARD_CONFIG_PATH, localConfigPath);
+  if (process.env.DASHBOARD_CONFIG_PATH) {
+    if (!(await fileExists(configuredPath))) {
+      throw new Error(`Configured dashboard config was not found at ${configuredPath}`);
+    }
+    return configuredPath;
+  }
+
+  if (await fileExists(localConfigPath)) return localConfigPath;
+  return defaultConfigPath;
+}
+
+function resolveTelegramStorePath() {
+  return resolveProjectPath(process.env.TELEGRAM_STORE_PATH, defaultTelegramStorePath);
+}
 
 async function readConfig() {
-  const raw = await fs.readFile(configPath, 'utf8');
+  const raw = await fs.readFile(await resolveConfigPath(), 'utf8');
   return JSON.parse(raw);
 }
 
 async function ensureTelegramState() {
   if (telegramState) return telegramState;
+  const storePath = resolveTelegramStorePath();
   try {
-    const raw = await fs.readFile(telegramStorePath, 'utf8');
+    const raw = await fs.readFile(storePath, 'utf8');
     telegramState = JSON.parse(raw);
   } catch {
-    telegramState = { nextId: 1, items: [], lastUpdateId: 0 };
-    await fs.writeFile(telegramStorePath, JSON.stringify(telegramState, null, 2), 'utf8');
+    if (storePath !== legacyTelegramStorePath && await fileExists(legacyTelegramStorePath)) {
+      const raw = await fs.readFile(legacyTelegramStorePath, 'utf8');
+      telegramState = JSON.parse(raw);
+      await fs.writeFile(storePath, JSON.stringify(telegramState, null, 2), 'utf8');
+    } else {
+      telegramState = { nextId: 1, items: [], lastUpdateId: 0 };
+      await fs.writeFile(storePath, JSON.stringify(telegramState, null, 2), 'utf8');
+    }
   }
   if (!Number.isInteger(telegramState.lastUpdateId)) telegramState.lastUpdateId = 0;
   return telegramState;
@@ -103,11 +152,203 @@ async function ensureTelegramState() {
 
 async function persistTelegramState() {
   if (!telegramState) return;
-  await fs.writeFile(telegramStorePath, JSON.stringify(telegramState, null, 2), 'utf8');
+  await fs.writeFile(resolveTelegramStorePath(), JSON.stringify(telegramState, null, 2), 'utf8');
 }
 
 function formatErrorMessage(error, fallback) {
   return error instanceof Error ? error.message : fallback;
+}
+
+function eventIntersectsRange(start, end, from, to) {
+  return start.getTime() <= to.getTime() && end.getTime() >= from.getTime();
+}
+
+function getSafeCalendars(config = {}) {
+  return (config.calendars || [])
+    .filter((calendar) => typeof calendar?.label === 'string' && calendar.label.trim())
+    .map((calendar) => ({
+      label: calendar.label.trim(),
+      color: calendar.color || null,
+      hasServerFeed: Boolean(calendar.icsUrl?.trim()),
+    }));
+}
+
+function buildCalendarCacheKey(config = {}) {
+  return JSON.stringify({
+    timezone: config.timezone || 'UTC',
+    calendars: (config.calendars || []).map((calendar) => ({
+      label: calendar.label || '',
+      color: calendar.color || '',
+      icsUrl: calendar.icsUrl || '',
+    })),
+    fallbackCalendarEvents: config.fallbackCalendarEvents || [],
+  });
+}
+
+function normalizeParsedCalendarEvent(instance, calendar, ordinal) {
+  if (!(instance?.start instanceof Date) || Number.isNaN(instance.start.getTime())) return null;
+  const rawEnd = instance.end instanceof Date && !Number.isNaN(instance.end.getTime())
+    ? instance.end
+    : instance.start;
+
+  return {
+    id: `${calendar.label || 'calendar'}:${instance.uid || 'event'}:${ordinal}:${instance.start.toISOString()}`,
+    title: String(instance.summary || 'Untitled event').trim() || 'Untitled event',
+    location: typeof instance.location === 'string' ? instance.location.trim() : '',
+    start: instance.start.toISOString(),
+    end: rawEnd.toISOString(),
+    isAllDay: Boolean(instance.start?.dateOnly || rawEnd?.dateOnly || instance.isFullDay),
+    calendarLabel: calendar.label || 'Calendar',
+    color: calendar.color || null,
+    source: 'live',
+  };
+}
+
+async function fetchCalendarFeedEvents(calendar, from, to) {
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), 5000);
+
+  try {
+    const parsed = await ical.async.fromURL(calendar.icsUrl, {
+      signal: controller.signal,
+      headers: { 'User-Agent': 'tv-info-panel/0.1' },
+    });
+
+    const events = [];
+    let ordinal = 0;
+
+    for (const item of Object.values(parsed)) {
+      if (item?.type !== 'VEVENT' || !item.start || item.recurrenceid) continue;
+      const instances = ical.expandRecurringEvent(item, {
+        from,
+        to,
+        expandOngoing: true,
+      });
+
+      for (const instance of instances) {
+        const normalized = normalizeParsedCalendarEvent(instance, calendar, ordinal);
+        ordinal += 1;
+        if (!normalized) continue;
+
+        const start = new Date(normalized.start);
+        const end = new Date(normalized.end);
+        if (!eventIntersectsRange(start, end, from, to)) continue;
+        events.push(normalized);
+      }
+    }
+
+    return events;
+  } finally {
+    clearTimeout(timeout);
+  }
+}
+
+function buildFallbackCalendarEvents(config, from, to) {
+  return (config.fallbackCalendarEvents || [])
+    .flatMap((event, index) => {
+      const start = new Date(event.start);
+      const end = new Date(event.end || event.start);
+      if (Number.isNaN(start.getTime()) || Number.isNaN(end.getTime())) return [];
+      if (!eventIntersectsRange(start, end, from, to)) return [];
+      return [{
+        id: `fallback:${index}:${start.toISOString()}`,
+        title: String(event.title || 'Planned item').trim() || 'Planned item',
+        location: typeof event.location === 'string' ? event.location.trim() : '',
+        start: start.toISOString(),
+        end: end.toISOString(),
+        isAllDay: Boolean(event.isAllDay),
+        calendarLabel: event.calendarLabel || 'Board',
+        color: event.color || '#94a3b8',
+        source: 'fallback',
+      }];
+    });
+}
+
+function dedupeCalendarEvents(events) {
+  const seen = new Set();
+  return events.filter((event) => {
+    const key = [
+      event.calendarLabel,
+      event.title,
+      event.start,
+      event.end,
+      event.location,
+    ].join('|');
+    if (seen.has(key)) return false;
+    seen.add(key);
+    return true;
+  });
+}
+
+async function getCalendarPanelData(config) {
+  const cacheKey = buildCalendarCacheKey(config);
+  if (calendarCache.value && calendarCache.key === cacheKey && calendarCache.expiresAt > Date.now()) {
+    return calendarCache.value;
+  }
+
+  const now = new Date();
+  const from = new Date(now.getTime() - (6 * 60 * 60 * 1000));
+  const to = new Date(now.getTime() + (CALENDAR_LOOKAHEAD_DAYS * 24 * 60 * 60 * 1000));
+  const feedCalendars = (config.calendars || []).filter((calendar) => typeof calendar?.icsUrl === 'string' && calendar.icsUrl.trim());
+  const results = await Promise.allSettled(feedCalendars.map((calendar) => fetchCalendarFeedEvents(calendar, from, to)));
+  const failedFeeds = [];
+  let events = [];
+
+  results.forEach((result, index) => {
+    if (result.status === 'fulfilled') {
+      events.push(...result.value);
+      return;
+    }
+    failedFeeds.push(feedCalendars[index]?.label || `Calendar ${index + 1}`);
+  });
+
+  events = dedupeCalendarEvents(events)
+    .sort((left, right) => new Date(left.start).getTime() - new Date(right.start).getTime())
+    .slice(0, CALENDAR_MAX_EVENTS);
+
+  let status = '';
+  let mode = feedCalendars.length ? 'live' : 'setup';
+
+  if (!feedCalendars.length) {
+    status = 'For live Google events on TV, add each calendar’s Secret iCal URL in the local config.';
+    events = buildFallbackCalendarEvents(config, from, to)
+      .sort((left, right) => new Date(left.start).getTime() - new Date(right.start).getTime())
+      .slice(0, CALENDAR_MAX_EVENTS);
+    if (events.length > 0) mode = 'fallback';
+  } else if (events.length === 0) {
+    const fallbackEvents = buildFallbackCalendarEvents(config, from, to)
+      .sort((left, right) => new Date(left.start).getTime() - new Date(right.start).getTime())
+      .slice(0, CALENDAR_MAX_EVENTS);
+
+    if (fallbackEvents.length > 0) {
+      events = fallbackEvents;
+      mode = 'fallback';
+      status = failedFeeds.length
+        ? 'Calendar feeds are unavailable right now. Showing fallback agenda.'
+        : 'Showing fallback agenda until live calendar feeds are added.';
+    } else if (failedFeeds.length) {
+      mode = 'error';
+      status = 'Calendar feeds are unavailable right now.';
+    }
+  } else if (failedFeeds.length > 0) {
+    status = `${failedFeeds.length} calendar feed${failedFeeds.length === 1 ? '' : 's'} unavailable right now.`;
+  }
+
+  const value = {
+    fetchedAt: now.toISOString(),
+    metaLabel: events.length > 0 ? `Next ${CALENDAR_LOOKAHEAD_DAYS} days` : 'Agenda',
+    status,
+    mode,
+    events,
+  };
+
+  calendarCache = {
+    key: cacheKey,
+    expiresAt: Date.now() + CALENDAR_CACHE_TTL_MS,
+    value,
+  };
+
+  return value;
 }
 
 function formatDatePartsForZone(date, timeZone) {
@@ -152,7 +393,15 @@ function getCalendarEmbedParts(embedUrl) {
 }
 
 function buildMergedCalendarUrl(calendars = []) {
-  const first = calendars[0] ? getCalendarEmbedParts(calendars[0].embedUrl) : null;
+  const validCalendars = calendars.filter((calendar) => {
+    try {
+      return Boolean(getCalendarEmbedParts(calendar.embedUrl).src);
+    } catch {
+      return false;
+    }
+  });
+  const first = validCalendars[0] ? getCalendarEmbedParts(validCalendars[0].embedUrl) : null;
+  if (!first?.src) return '';
   const url = new URL('https://calendar.google.com/calendar/embed');
   url.searchParams.set('mode', 'AGENDA');
   url.searchParams.set('showTitle', '0');
@@ -164,7 +413,7 @@ function buildMergedCalendarUrl(calendars = []) {
   url.searchParams.set('wkst', '1');
   url.searchParams.set('ctz', first?.ctz || 'America/New_York');
 
-  for (const calendar of calendars) {
+  for (const calendar of validCalendars) {
     const { src } = getCalendarEmbedParts(calendar.embedUrl);
     if (src) url.searchParams.append('src', src);
     if (calendar.color) url.searchParams.append('color', calendar.color);
@@ -374,11 +623,79 @@ function buildStockFallback(item) {
   };
 }
 
+function calculatePercentChange(currentPrice, referencePrice) {
+  if (currentPrice == null || referencePrice == null || referencePrice === 0) return null;
+  return ((currentPrice - referencePrice) / referencePrice) * 100;
+}
+
+function isTimestampInPeriod(timestamp, period) {
+  if (!period) return false;
+  return timestamp >= period.start && timestamp < period.end;
+}
+
+function findLatestClosePoint(timestamps = [], closes = [], predicate = () => true) {
+  const pointCount = Math.min(timestamps.length, closes.length);
+  for (let index = pointCount - 1; index >= 0; index -= 1) {
+    const timestamp = timestamps[index];
+    const price = closes[index];
+    if (!Number.isFinite(timestamp) || !Number.isFinite(price)) continue;
+    if (predicate(timestamp)) {
+      return { timestamp, price };
+    }
+  }
+  return null;
+}
+
+function getDerivedMarketState(meta, latestPoint) {
+  const periods = meta?.currentTradingPeriod || {};
+  const nowSeconds = Math.floor(Date.now() / 1000);
+
+  if (isTimestampInPeriod(nowSeconds, periods.pre)) return 'PRE';
+  if (isTimestampInPeriod(nowSeconds, periods.regular)) return 'REGULAR';
+  if (isTimestampInPeriod(nowSeconds, periods.post)) return 'POST';
+
+  if (latestPoint && isTimestampInPeriod(latestPoint.timestamp, periods.post)) return 'POST';
+  if (latestPoint && isTimestampInPeriod(latestPoint.timestamp, periods.pre)) return 'PRE';
+  return 'CLOSED';
+}
+
+function deriveExtendedSession(meta, timestamps = [], closes = []) {
+  const periods = meta?.currentTradingPeriod || {};
+  const latestPoint = findLatestClosePoint(timestamps, closes);
+  const marketState = getDerivedMarketState(meta, latestPoint);
+  const previousClose = meta?.previousClose ?? meta?.chartPreviousClose ?? null;
+  const regularPoint = findLatestClosePoint(timestamps, closes, (timestamp) => isTimestampInPeriod(timestamp, periods.regular));
+  const regularReferencePrice = meta?.regularMarketPrice ?? regularPoint?.price ?? previousClose ?? null;
+  const prePoint = findLatestClosePoint(timestamps, closes, (timestamp) => isTimestampInPeriod(timestamp, periods.pre));
+  const postPoint = findLatestClosePoint(timestamps, closes, (timestamp) => isTimestampInPeriod(timestamp, periods.post));
+
+  if (marketState === 'PRE' && prePoint?.price != null) {
+    return {
+      marketState,
+      preMarketPrice: prePoint.price,
+      preMarketChange: previousClose != null ? prePoint.price - previousClose : null,
+      preMarketChangePercent: calculatePercentChange(prePoint.price, previousClose),
+    };
+  }
+
+  if (marketState === 'POST' && postPoint?.price != null) {
+    return {
+      marketState,
+      postMarketPrice: postPoint.price,
+      postMarketChange: regularReferencePrice != null ? postPoint.price - regularReferencePrice : null,
+      postMarketChangePercent: calculatePercentChange(postPoint.price, regularReferencePrice),
+    };
+  }
+
+  return { marketState };
+}
+
 async function fetchQuote(item) {
   const quoteSymbol = item.quoteSymbol || item.symbol;
   const url = new URL(`https://query1.finance.yahoo.com/v8/finance/chart/${encodeURIComponent(quoteSymbol)}`);
-  url.searchParams.set('interval', '1d');
-  url.searchParams.set('range', '5d');
+  url.searchParams.set('interval', '5m');
+  url.searchParams.set('range', '1d');
+  url.searchParams.set('includePrePost', 'true');
 
   const response = await fetch(url, {
     headers: {
@@ -394,7 +711,9 @@ async function fetchQuote(item) {
   const result = data?.chart?.result?.[0];
   const meta = result?.meta;
   const closes = result?.indicators?.quote?.[0]?.close || [];
-  const price = meta?.regularMarketPrice ?? meta?.previousClose ?? null;
+  const timestamps = result?.timestamp || [];
+  const latestPoint = findLatestClosePoint(timestamps, closes);
+  const price = meta?.regularMarketPrice ?? latestPoint?.price ?? meta?.previousClose ?? null;
   const previousClose = meta?.previousClose
     ?? meta?.chartPreviousClose
     ?? closes.findLast((value) => Number.isFinite(value) && value !== price)
@@ -408,6 +727,7 @@ async function fetchQuote(item) {
   const dayPercentChange = dayChange != null && previousClose ? (dayChange / previousClose) * 100 : null;
   const basisChange = item.averageCost != null ? price - item.averageCost : null;
   const basisPercentChange = basisChange != null && item.averageCost ? (basisChange / item.averageCost) * 100 : null;
+  const extendedSession = deriveExtendedSession(meta, timestamps, closes);
 
   return {
     symbol: item.symbol,
@@ -422,40 +742,15 @@ async function fetchQuote(item) {
     basisPercentChange,
     currency: meta?.currency || 'USD',
     exchange: meta?.exchangeName || '',
-    marketState: meta?.marketState || '',
+    marketState: extendedSession.marketState || '',
+    preMarketPrice: extendedSession.preMarketPrice ?? null,
+    preMarketChange: extendedSession.preMarketChange ?? null,
+    preMarketChangePercent: extendedSession.preMarketChangePercent ?? null,
+    postMarketPrice: extendedSession.postMarketPrice ?? null,
+    postMarketChange: extendedSession.postMarketChange ?? null,
+    postMarketChangePercent: extendedSession.postMarketChangePercent ?? null,
     isFallback: false,
   };
-}
-
-async function fetchQuoteExtended(symbols = []) {
-  if (!symbols.length) return new Map();
-  const url = new URL('https://query1.finance.yahoo.com/v7/finance/quote');
-  url.searchParams.set('symbols', symbols.join(','));
-  const response = await fetch(url, {
-    headers: {
-      'User-Agent': 'tv-info-panel/0.1',
-    },
-  });
-
-  if (!response.ok) {
-    throw new Error(`Extended quote request failed with HTTP ${response.status}`);
-  }
-
-  const data = await response.json();
-  const result = data?.quoteResponse?.result || [];
-  const bySymbol = new Map();
-  for (const quote of result) {
-    bySymbol.set(quote.symbol, {
-      marketState: quote.marketState || '',
-      preMarketPrice: quote.preMarketPrice ?? null,
-      preMarketChange: quote.preMarketChange ?? null,
-      preMarketChangePercent: quote.preMarketChangePercent ?? null,
-      postMarketPrice: quote.postMarketPrice ?? null,
-      postMarketChange: quote.postMarketChange ?? null,
-      postMarketChangePercent: quote.postMarketChangePercent ?? null,
-    });
-  }
-  return bySymbol;
 }
 
 async function getStocksData(config) {
@@ -467,35 +762,9 @@ async function getStocksData(config) {
     }
   }));
 
-  const quoteSymbols = quotes.map((quote) => quote.quoteSymbol).filter(Boolean);
-  let extendedBySymbol = new Map();
-  try {
-    extendedBySymbol = await fetchQuoteExtended(quoteSymbols);
-  } catch (error) {
-    if (!quoteExtendedFetchWarned) {
-      quoteExtendedFetchWarned = true;
-      console.warn('[stocks] extended quote data unavailable:', formatErrorMessage(error, 'unknown error'));
-    }
-  }
-
-  const mergedQuotes = quotes.map((quote) => {
-    const extended = extendedBySymbol.get(quote.quoteSymbol);
-    if (!extended) return quote;
-    return {
-      ...quote,
-      marketState: extended.marketState || quote.marketState || '',
-      preMarketPrice: extended.preMarketPrice,
-      preMarketChange: extended.preMarketChange,
-      preMarketChangePercent: extended.preMarketChangePercent,
-      postMarketPrice: extended.postMarketPrice,
-      postMarketChange: extended.postMarketChange,
-      postMarketChangePercent: extended.postMarketChangePercent,
-    };
-  });
-
   return {
     fetchedAt: new Date().toISOString(),
-    quotes: mergedQuotes,
+    quotes,
   };
 }
 
@@ -510,7 +779,7 @@ function buildInspirationData() {
 function normalizeTelegramItems(items, timeZone) {
   return items
     .slice()
-    .sort((a, b) => a.id - b.id)
+    .sort((a, b) => b.id - a.id)
     .map((item) => ({
       ...item,
       createdAtLabel: formatTelegramCreatedAt(item.createdAt, timeZone),
@@ -675,12 +944,19 @@ function startTelegramPolling() {
 }
 
 const app = express();
+const indexFile = path.join(publicDir, 'index.html');
+
+app.get(['/', '/display'], (_request, response) => {
+  response.sendFile(indexFile);
+});
 
 app.use(express.static(publicDir));
 
 app.get('/api/config', async (_request, response) => {
   try {
     const config = await readConfig();
+    const safeCalendars = getSafeCalendars(config);
+
     response.json({
       title: config.title,
       notes: config.notes,
@@ -690,18 +966,20 @@ app.get('/api/config', async (_request, response) => {
       location: config.location.label,
       tide: config.tide || null,
       stocks: config.stocks,
-      calendars: (config.calendars || []).map((calendar) => ({
-        label: calendar.label,
-        color: calendar.color || null,
-        embedUrl: formatEmbedCalendarUrl(calendar.embedUrl),
-      })),
-      mergedCalendar: {
-        label: 'Combined family schedule',
-        embedUrl: buildMergedCalendarUrl(config.calendars || []),
-      },
+      calendars: safeCalendars,
     });
   } catch (error) {
     response.status(500).json({ error: formatErrorMessage(error, 'Failed to load config.') });
+  }
+});
+
+app.get('/api/calendar', async (_request, response) => {
+  try {
+    const config = await readConfig();
+    const data = await getCalendarPanelData(config);
+    response.json(data);
+  } catch (error) {
+    response.status(500).json({ error: formatErrorMessage(error, 'Failed to load calendar.') });
   }
 });
 

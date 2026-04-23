@@ -1,6 +1,8 @@
 # tv-info-panel
 
-Quick lightweight office TV dashboard with market watchlist, richer Charleston weather, multi-timezone clocks, end-of-day countdown, merged Google calendar view, Telegram board items, and daily quotes.
+Quick lightweight office TV dashboard with market watchlist, richer Charleston weather, multi-timezone clocks, end-of-day countdown, a TV-safe agenda panel, Telegram board items, and daily quotes.
+
+The tracked repo ships with safe sample data. Personal calendars and other private board settings belong in local-only files.
 
 ## Stack
 
@@ -16,7 +18,7 @@ Quick lightweight office TV dashboard with market watchlist, richer Charleston w
 - Alabama / SFO / Mountain clocks
 - Charleston weather with tide, moon phase, UV, sunrise/sunset, and next hours
 - Stock and crypto watchlist
-- Combined Google calendar agenda
+- Combined agenda panel with server-fed calendar events
 - Telegram-controlled task / reminder panel
 - Quote of the day + Bible quote
 - Five switchable visual layouts from the on-screen `Next layout` button
@@ -35,35 +37,65 @@ Quick lightweight office TV dashboard with market watchlist, richer Charleston w
    cp .env.example .env
    ```
 
-3. Start the local server:
+3. Create a local dashboard override if you want private calendars, labels, or watchlists:
+
+   ```bash
+   cp data/dashboard-config.json data/dashboard-config.local.json
+   ```
+
+4. Start the local server:
 
    ```bash
    npm run dev
    ```
 
-4. Open:
+5. Open:
 
    ```text
    http://localhost:3030
    ```
 
-5. Run panel contract tests:
+   TV-friendly display route:
+
+   ```text
+   http://localhost:3030/display
+   ```
+
+6. Run panel contract tests:
 
    ```bash
    npm test
    ```
 
+Local-only files:
+
+- `data/dashboard-config.local.json` is ignored by git and overrides the tracked sample config.
+- `data/telegram-panel.local.json` is ignored by git and stores runtime Telegram board items.
+- `DASHBOARD_CONFIG_PATH` and `TELEGRAM_STORE_PATH` can point to custom files if you want them elsewhere.
+
 ## Calendar Setup
 
-The current local-first setup uses Google Calendar embed URLs stored in `data/dashboard-config.json`, then merges them into one Google Calendar embed panel.
+The TV-friendly calendar path is server-side, not a Google iframe on the TV.
 
-That means:
+For each Google calendar you want on the board, add its `Secret address in iCal format` to `data/dashboard-config.local.json` as `icsUrl`.
 
-- no TV-side login is required
-- you can add or remove shared calendars directly in config
-- the board renders one merged agenda view plus source pills
+Example:
 
-If you later want a merged event list, we can add a server-side authenticated calendar integration in a later pass.
+```json
+{
+  "label": "Family",
+  "color": "#22c55e",
+  "icsUrl": "https://calendar.google.com/calendar/ical/your-private-feed/basic.ics"
+}
+```
+
+Notes:
+
+- keep `icsUrl` values only in the ignored local config file
+- do not commit private iCal feed URLs
+- the board will show fallback events if no live `icsUrl` feeds are configured
+- `/display` is the best route for TVs because it removes the dashboard header and uses tighter spacing
+- you cannot derive Google `Secret address in iCal format` values from the existing embed URLs; paste them manually from Google Calendar settings
 
 ## Telegram Board
 
@@ -93,7 +125,7 @@ Important:
 
 ## Editable Config
 
-Change these in `data/dashboard-config.json`:
+Change these in `data/dashboard-config.local.json`:
 
 - dashboard title
 - timezone
@@ -102,7 +134,7 @@ Change these in `data/dashboard-config.json`:
 - workday end time
 - additional timezone clocks
 - stock / crypto / option watchlist
-- Google calendar embed URLs
+- Google calendar `icsUrl` feeds
 - calendar colors
 
 ## Repo Guidance
@@ -128,13 +160,36 @@ This repo is intentionally separate from `chs-spots`.
 
 ### Fire TV path
 
-- Preferred display app: Fully Kiosk Browser
-- Point the Fire TV to the dashboard URL
-- Keep fullscreen and auto-reload enabled
+- Keep the TV as a thin browser client.
+- Prefer `/display` or a packaged Fire TV web app so the TV never has to log into Google directly.
+- Avoid relying on paid kiosk dependencies unless you explicitly want them.
+
+## Fire TV Wrapper App
+
+A starter Fire TV wrapper app lives in [fire-tv-wrapper/README.md](/Users/paulstewart/projects/tv-info-panel/fire-tv-wrapper/README.md).
+
+It is a small Android / Fire TV app that opens the dashboard in a full-screen `WebView` using the TV-safe route:
+
+```text
+http://192.168.86.250:3030/display
+```
+
+Before building it, copy:
+
+```bash
+cp fire-tv-wrapper/dashboard.local.properties.example fire-tv-wrapper/dashboard.local.properties
+```
+
+Then set:
+
+```properties
+dashboardUrl=http://192.168.86.250:3030/display
+appName=Paul's Office Panel
+```
 
 ## Notes
 
 - Weather uses Open-Meteo plus NOAA tides.
-- Stocks use Yahoo Finance chart + quote data (regular + pre/post-market when available), with built-in demo fallbacks if remote fetches fail.
-- Telegram board items are stored in `data/telegram-panel.json`.
+- Stocks use Yahoo Finance chart data, including derived pre-market and after-hours sessions when available, with built-in demo fallbacks if remote fetches fail.
+- Telegram board items are stored in `data/telegram-panel.local.json`.
 - This repo is safe to iterate on locally before any Ubuntu deployment.

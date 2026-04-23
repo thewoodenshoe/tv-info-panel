@@ -45,6 +45,9 @@ for (const viewport of viewports) {
         '.telegram-item-text',
         '.telegram-empty',
         '.calendar-source-pill',
+        '.calendar-day-title',
+        '.calendar-event-time',
+        '.calendar-event-title',
         '#layout-name',
       ];
 

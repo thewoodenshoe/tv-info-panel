@@ -39,7 +39,7 @@ for (const viewport of viewports) {
         '#clock', '#date', '#workday-countdown', '.timezone-card',
         '.weather-temp', '.weather-summary-title', '.weather-highlight', '.detail-card',
         '.stock-symbol', '.stock-label', '.stock-price', '.stock-change',
-        '.quote-card', '.bible-card', '.calendar-source-pill', '#calendar-frame',
+        '.quote-card', '.bible-card', '.calendar-source-pill', '.calendar-event',
       ];
       for (const selector of mustExist) {
         await expect(page.locator(selector).first()).toBeVisible();
@@ -49,14 +49,12 @@ for (const viewport of viewports) {
       await expect(page.locator('.detail-card')).toHaveCount(4);
       await expect(page.locator('.calendar-source-pill')).toHaveCount(5);
       await expect(page.locator('.timezone-card')).toHaveCount(3);
+      await expect(page.locator('.calendar-event').first()).toBeVisible();
+      await expect(page.locator('.calendar-day-group').first()).toBeVisible();
 
       await expect(page.locator('.stock-card')).toHaveCount(4);
       await expect(page.locator('.stock-basis')).toHaveCount(1);
       await expect(page.locator('.stock-extended')).toHaveCount(1);
-
-      const iframeSrc = await page.locator('#calendar-frame').getAttribute('src');
-      expect(iframeSrc).toBeTruthy();
-      expect(iframeSrc).not.toBe('about:blank');
 
       const telegramItems = page.locator('.telegram-item');
       const telegramEmpty = page.locator('.telegram-empty');
