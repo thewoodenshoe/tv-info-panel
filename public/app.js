@@ -243,10 +243,13 @@ function renderWeather(weather) {
 
 function formatMoney(value) {
   if (value == null) return '--';
+  const absValue = Math.abs(value);
+  const digits = absValue >= 1000 ? 0 : 2;
   return new Intl.NumberFormat('en-US', {
     style: 'currency',
     currency: 'USD',
-    maximumFractionDigits: 2,
+    maximumFractionDigits: digits,
+    minimumFractionDigits: digits,
   }).format(value);
 }
 
@@ -268,20 +271,22 @@ function renderStocks(stocks) {
       const arrow = quote.dayChange > 0 ? '▲' : quote.dayChange < 0 ? '▼' : '·';
       return `
         <article class="stock-card" data-symbol="${quote.symbol}" style="--brand: ${brandColor}">
-          <div class="stock-card-top">
+          <header class="stock-card-top">
             <span class="stock-badge" aria-hidden="true"></span>
             <div class="stock-identity">
               <div class="stock-symbol">${quote.symbol}${fallbackLabel}</div>
               <div class="stock-label">${quote.label}</div>
             </div>
+          </header>
+          <div class="stock-card-core">
+            <div class="stock-price">${formatMoney(quote.price)}</div>
+            <div class="stock-change ${state}"><span class="stock-arrow">${arrow}</span> ${formatSigned(quote.dayChange)}${dayPercent}</div>
           </div>
-          <div class="stock-price">${formatMoney(quote.price)}</div>
-          <div class="stock-change ${state}"><span class="stock-arrow">${arrow}</span> ${formatSigned(quote.dayChange)}${dayPercent}</div>
           ${quote.averageCost != null ? `
-            <div class="stock-basis">
+            <footer class="stock-basis">
               <div class="stock-basis-label">${quote.averageCostLabel || `${formatMoney(quote.averageCost)} avg cost`}</div>
               <div class="stock-basis-change ${basisState}">Vs basis ${formatSigned(quote.basisPercentChange)}%</div>
-            </div>
+            </footer>
           ` : ''}
         </article>
       `;

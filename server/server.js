@@ -609,9 +609,10 @@ function startTelegramPolling() {
     try {
       await pollTelegramOnce();
     } catch (error) {
-      console.error('[telegram-panel]', formatErrorMessage(error, 'Polling failed'));
+      const cause = error?.cause ? ` (cause: ${error.cause.code || error.cause.message || error.cause})` : '';
+      console.error('[telegram-panel]', formatErrorMessage(error, 'Polling failed') + cause);
     } finally {
-      telegramPollTimer = setTimeout(tick, 5000);
+      telegramPollTimer = setTimeout(tick, 15000);
     }
   };
 
