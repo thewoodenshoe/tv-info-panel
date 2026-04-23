@@ -81,6 +81,7 @@ const DAILY_BIBLE_QUOTES = [
 let telegramState = null;
 let telegramPollStarted = false;
 let telegramPollTimer = null;
+let quoteExtendedFetchWarned = false;
 
 async function readConfig() {
   const raw = await fs.readFile(configPath, 'utf8');
@@ -426,20 +427,75 @@ async function fetchQuote(item) {
   };
 }
 
+async function fetchQuoteExtended(symbols = []) {
+  if (!symbols.length) return new Map();
+  const url = new URL('https://query1.finance.yahoo.com/v7/finance/quote');
+  url.searchParams.set('symbols', symbols.join(','));
+  const response = await fetch(url, {
+    headers: {
+      'User-Agent': 'tv-info-panel/0.1',
+    },
+  });
+
+  if (!response.ok) {
+    throw new Error(`Extended quote request failed with HTTP ${response.status}`);
+  }
+
+  const data = await response.json();
+  const result = data?.quoteResponse?.result || [];
+  const bySymbol = new Map();
+  for (const quote of result) {
+    bySymbol.set(quote.symbol, {
+      marketState: quote.marketState || '',
+      preMarketPrice: quote.preMarketPrice ?? null,
+      preMarketChange: quote.preMarketChange ?? null,
+      preMarketChangePercent: quote.preMarketChangePercent ?? null,
+      postMarketPrice: quote.postMarketPrice ?? null,
+      postMarketChange: quote.postMarketChange ?? null,
+      postMarketChangePercent: quote.postMarketChangePercent ?? null,
+    });
+  }
+  return bySymbol;
+}
+
 async function getStocksData(config) {
-  const quotes = await Promise.all(
-    config.stocks.map(async (item) => {
-      try {
-        return await fetchQuote(item);
-      } catch {
-        return buildStockFallback(item);
-      }
-    }),
-  );
+  const quotes = await Promise.all(config.stocks.map(async (item) => {
+    try {
+      return await fetchQuote(item);
+    } catch {
+      return buildStockFallback(item);
+    }
+  }));
+
+  const quoteSymbols = quotes.map((quote) => quote.quoteSymbol).filter(Boolean);
+  let extendedBySymbol = new Map();
+  try {
+    extendedBySymbol = await fetchQuoteExtended(quoteSymbols);
+  } catch (error) {
+    if (!quoteExtendedFetchWarned) {
+      quoteExtendedFetchWarned = true;
+      console.warn('[stocks] extended quote data unavailable:', formatErrorMessage(error, 'unknown error'));
+    }
+  }
+
+  const mergedQuotes = quotes.map((quote) => {
+    const extended = extendedBySymbol.get(quote.quoteSymbol);
+    if (!extended) return quote;
+    return {
+      ...quote,
+      marketState: extended.marketState || quote.marketState || '',
+      preMarketPrice: extended.preMarketPrice,
+      preMarketChange: extended.preMarketChange,
+      preMarketChangePercent: extended.preMarketChangePercent,
+      postMarketPrice: extended.postMarketPrice,
+      postMarketChange: extended.postMarketChange,
+      postMarketChangePercent: extended.postMarketChangePercent,
+    };
+  });
 
   return {
     fetchedAt: new Date().toISOString(),
-    quotes,
+    quotes: mergedQuotes,
   };
 }
 

@@ -259,6 +259,23 @@ function formatSigned(value, digits = 2) {
   return `${sign}${Number(value).toFixed(digits)}`;
 }
 
+function getExtendedMarketLine(quote) {
+  const marketState = `${quote.marketState || ''}`.toUpperCase();
+  if (marketState === 'PRE' || marketState === 'PREPRE') {
+    if (quote.preMarketPrice == null) return '';
+    const percent = quote.preMarketChangePercent == null ? '' : ` (${formatSigned(quote.preMarketChangePercent)}%)`;
+    const state = quote.preMarketChange > 0 ? 'is-up' : quote.preMarketChange < 0 ? 'is-down' : 'is-flat';
+    return `<div class="stock-extended ${state}">Pre-market ${formatMoney(quote.preMarketPrice)}${percent}</div>`;
+  }
+  if (marketState === 'POST' || marketState === 'POSTPOST') {
+    if (quote.postMarketPrice == null) return '';
+    const percent = quote.postMarketChangePercent == null ? '' : ` (${formatSigned(quote.postMarketChangePercent)}%)`;
+    const state = quote.postMarketChange > 0 ? 'is-up' : quote.postMarketChange < 0 ? 'is-down' : 'is-flat';
+    return `<div class="stock-extended ${state}">After hours ${formatMoney(quote.postMarketPrice)}${percent}</div>`;
+  }
+  return '';
+}
+
 function renderStocks(stocks) {
   const grid = document.querySelector('#stocks-grid');
   grid.innerHTML = stocks.quotes
@@ -269,6 +286,7 @@ function renderStocks(stocks) {
       const basisState = quote.basisChange > 0 ? 'is-up' : quote.basisChange < 0 ? 'is-down' : 'is-flat';
       const fallbackLabel = quote.isFallback ? ' · Demo' : '';
       const arrow = quote.dayChange > 0 ? '▲' : quote.dayChange < 0 ? '▼' : '·';
+      const extendedLine = getExtendedMarketLine(quote);
       return `
         <article class="stock-card" data-symbol="${quote.symbol}" style="--brand: ${brandColor}">
           <header class="stock-card-top">
@@ -281,6 +299,7 @@ function renderStocks(stocks) {
           <div class="stock-card-core">
             <div class="stock-price">${formatMoney(quote.price)}</div>
             <div class="stock-change ${state}"><span class="stock-arrow">${arrow}</span> ${formatSigned(quote.dayChange)}${dayPercent}</div>
+            ${extendedLine}
           </div>
           ${quote.averageCost != null ? `
             <footer class="stock-basis">

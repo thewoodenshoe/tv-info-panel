@@ -47,6 +47,12 @@ Quick lightweight office TV dashboard with market watchlist, richer Charleston w
    http://localhost:3030
    ```
 
+5. Run panel contract tests:
+
+   ```bash
+   npm test
+   ```
+
 ## Calendar Setup
 
 The current local-first setup uses Google Calendar embed URLs stored in `data/dashboard-config.json`, then merges them into one Google Calendar embed panel.
@@ -129,6 +135,6 @@ This repo is intentionally separate from `chs-spots`.
 ## Notes
 
 - Weather uses Open-Meteo plus NOAA tides.
-- Stocks use Yahoo Finance chart data with built-in demo fallbacks if the remote quote fetch fails.
+- Stocks use Yahoo Finance chart + quote data (regular + pre/post-market when available), with built-in demo fallbacks if remote fetches fail.
 - Telegram board items are stored in `data/telegram-panel.json`.
 - This repo is safe to iterate on locally before any Ubuntu deployment.
