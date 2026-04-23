@@ -1,7 +1,12 @@
 /* =============================================================
-   TV Info Panel — fits on one TV screen, no scroll, ever.
-   5 layouts × 5 color schemes × 5 panel treatments.
-   Calendar always consumes 30vw (left or right), full height.
+   TV Info Panel — crisp card-based design system.
+
+   Rules:
+   1. Whole app lives in 100vh × 100vw, overflow hidden, never scrolls.
+   2. Every panel is a floating CARD with distinct color identity.
+   3. Panels inside a layout are differentiated from each other by hue.
+   4. Each layout has its own canvas, palette, and card treatment.
+   5. Calendar column is always 30vw (left or right).
    ============================================================= */
 
 *,
@@ -20,13 +25,14 @@ body {
 }
 
 body {
-  color: var(--text);
-  background: var(--bg);
-  font-family: 'Inter', 'SF Pro Text', 'Segoe UI', system-ui, sans-serif;
+  color: var(--canvas-ink);
+  background: var(--canvas-bg);
+  font-family: 'Inter', 'SF Pro Text', 'Segoe UI', system-ui, -apple-system, sans-serif;
   font-size: clamp(0.72rem, 0.95vw, 1rem);
   line-height: 1.35;
-  letter-spacing: 0.01em;
-  transition: background 0.6s ease, color 0.6s ease;
+  letter-spacing: 0.005em;
+  transition: background 0.4s ease, color 0.4s ease;
+  -webkit-font-smoothing: antialiased;
 }
 
 .app-shell {
@@ -34,41 +40,46 @@ body {
   width: 100vw;
   display: flex;
   flex-direction: column;
-  padding: 0;
 }
 
 /* ---------------- Topbar ---------------- */
 
 .topbar {
   flex: 0 0 auto;
-  height: clamp(42px, 4.6vh, 64px);
+  height: clamp(44px, 4.6vh, 64px);
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 0 clamp(12px, 1.4vw, 28px);
+  padding: 0 clamp(14px, 1.6vw, 28px);
   background: var(--topbar-bg);
   border-bottom: 1px solid var(--divider);
-  backdrop-filter: blur(16px);
+}
+
+.brand-block {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
 }
 
 .brand-block .eyebrow {
   text-transform: uppercase;
-  letter-spacing: 0.22em;
-  font-size: clamp(0.52rem, 0.65vw, 0.68rem);
-  color: var(--muted);
+  letter-spacing: 0.28em;
+  font-size: clamp(0.5rem, 0.65vw, 0.65rem);
+  color: var(--canvas-muted);
+  font-weight: 600;
 }
 
 .brand-block h1 {
-  font-size: clamp(0.85rem, 1.15vw, 1.2rem);
+  font-size: clamp(0.9rem, 1.15vw, 1.15rem);
   font-weight: 700;
-  color: var(--text);
+  color: var(--canvas-ink);
   letter-spacing: -0.01em;
 }
 
 .layout-switcher {
   display: flex;
   align-items: center;
-  gap: clamp(8px, 1vw, 18px);
+  gap: clamp(10px, 1vw, 18px);
 }
 
 .layout-copy {
@@ -77,35 +88,33 @@ body {
 }
 
 .layout-copy .metric-label {
-  font-size: clamp(0.5rem, 0.6vw, 0.65rem);
-  letter-spacing: 0.22em;
+  font-size: clamp(0.48rem, 0.6vw, 0.6rem);
+  letter-spacing: 0.28em;
   text-transform: uppercase;
-  color: var(--muted);
+  color: var(--canvas-muted);
 }
 
 .layout-copy strong {
   display: block;
-  font-size: clamp(0.78rem, 1vw, 1rem);
-  color: var(--text);
+  font-size: clamp(0.8rem, 1vw, 1rem);
+  color: var(--canvas-ink);
   font-weight: 600;
 }
 
 .layout-button {
-  border: 1px solid var(--accent-border);
-  background: var(--accent-fill);
-  color: var(--accent-ink);
+  border: 1px solid var(--button-border);
+  background: var(--button-bg);
+  color: var(--button-ink);
   font-weight: 600;
-  font-size: clamp(0.72rem, 0.9vw, 0.9rem);
-  padding: clamp(6px, 0.8vh, 12px) clamp(10px, 1.2vw, 20px);
-  border-radius: var(--btn-radius, 999px);
+  font-size: clamp(0.72rem, 0.9vw, 0.88rem);
+  padding: clamp(6px, 0.9vh, 12px) clamp(12px, 1.3vw, 22px);
+  border-radius: var(--button-radius, 999px);
   cursor: pointer;
   letter-spacing: 0.02em;
-  transition: transform 0.15s ease, background 0.2s ease, color 0.2s ease;
+  transition: transform 0.15s ease, background 0.2s ease;
 }
 
-.layout-button:hover {
-  transform: translateY(-1px);
-}
+.layout-button:hover { transform: translateY(-1px); }
 
 /* ---------------- Dashboard grid ---------------- */
 
@@ -113,61 +122,91 @@ body {
   flex: 1 1 auto;
   min-height: 0;
   display: grid;
-  gap: clamp(6px, 0.7vw, 14px);
-  padding: clamp(6px, 0.7vw, 14px);
+  gap: clamp(8px, 0.9vw, 16px);
+  padding: clamp(10px, 1vw, 18px);
 }
 
-/* Every panel keeps itself inside its cell. Shrink, never scroll the page. */
+/* ---------------- PER-PANEL COLOR IDENTITY
+   (hue is overridden by each layout) ---------------- */
+
+.panel--time     { --hue: var(--hue-time); }
+.panel--weather  { --hue: var(--hue-weather); }
+.panel--stocks   { --hue: var(--hue-stocks); }
+.panel--quotes   { --hue: var(--hue-quotes); }
+.panel--telegram { --hue: var(--hue-telegram); }
+.panel--calendar { --hue: var(--hue-calendar); }
+
+/* ---------------- Panel base ---------------- */
+
 .panel {
   min-height: 0;
   min-width: 0;
   overflow: hidden;
   display: flex;
   flex-direction: column;
-  padding: clamp(8px, 0.9vw, 18px);
+  padding: clamp(12px, 1.1vw, 22px);
   background: var(--panel-bg);
-  border: 1px solid var(--panel-border);
-  border-radius: var(--panel-radius, 16px);
+  color: var(--panel-ink);
+  border: var(--panel-border-width, 1px) solid var(--panel-border);
+  border-radius: var(--panel-radius, 18px);
   box-shadow: var(--panel-shadow, none);
   position: relative;
 }
 
+/* Shared header layout */
 .panel-header {
   flex: 0 0 auto;
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: 8px;
-  margin-bottom: clamp(4px, 0.5vh, 10px);
+  margin-bottom: clamp(8px, 0.9vh, 14px);
+}
+
+/* The colored dot in each panel header — the panel's identity marker */
+.panel-header h2::before {
+  content: '';
+  display: inline-block;
+  vertical-align: middle;
+  width: clamp(8px, 0.7vw, 12px);
+  height: clamp(8px, 0.7vw, 12px);
+  border-radius: 3px;
+  background: var(--hue);
+  margin-right: clamp(7px, 0.65vw, 11px);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--hue) 18%, transparent);
 }
 
 .panel-header h2 {
-  font-size: clamp(0.68rem, 0.9vw, 0.95rem);
-  font-weight: 600;
-  letter-spacing: 0.14em;
+  font-size: clamp(0.65rem, 0.82vw, 0.82rem);
+  font-weight: 700;
+  letter-spacing: 0.18em;
   text-transform: uppercase;
-  color: var(--accent);
+  color: var(--panel-ink);
+  display: flex;
+  align-items: center;
 }
 
 .panel-caption {
   font-size: clamp(0.55rem, 0.7vw, 0.72rem);
-  color: var(--muted);
+  color: var(--panel-muted);
   letter-spacing: 0.02em;
 }
 
 .panel-caption code {
   background: var(--code-bg);
+  color: var(--code-ink);
   padding: 1px 5px;
   border-radius: 4px;
   font-size: 0.85em;
-  color: var(--accent);
 }
 
 .panel-meta {
-  font-size: clamp(0.5rem, 0.65vw, 0.68rem);
-  letter-spacing: 0.1em;
+  font-size: clamp(0.5rem, 0.65vw, 0.66rem);
+  letter-spacing: 0.14em;
   text-transform: uppercase;
-  color: var(--muted);
+  color: var(--panel-muted);
+  font-weight: 600;
+  white-space: nowrap;
 }
 
 .status-message:not(:empty) {
@@ -176,115 +215,127 @@ body {
   margin-bottom: 6px;
 }
 
-/* ---------------- Grid areas per panel ---------------- */
+/* ---------------- Panel grid-area map ---------------- */
 
-#panel-time { grid-area: time; }
-#panel-weather { grid-area: weather; }
-#panel-stocks { grid-area: stocks; }
-#panel-quotes { grid-area: quotes; }
+#panel-time     { grid-area: time; }
+#panel-weather  { grid-area: weather; }
+#panel-stocks   { grid-area: stocks; }
+#panel-quotes   { grid-area: quotes; }
 #panel-telegram { grid-area: telegram; }
 #panel-calendar { grid-area: calendar; }
 
-/* ---------------- Shared inner components ---------------- */
+/* =============================================================
+   TIME PANEL
+   ============================================================= */
 
 .time-grid {
   display: grid;
-  grid-template-columns: 1.4fr 1fr;
-  gap: clamp(6px, 0.8vw, 16px);
+  grid-template-columns: 1.3fr 1fr;
+  gap: clamp(8px, 0.9vw, 16px);
   flex: 0 0 auto;
+  align-items: end;
 }
 
-.time-block {
-  min-width: 0;
+.time-block { min-width: 0; }
+
+.time-block--countdown .metric-value--countdown {
+  color: var(--hue);
 }
 
 .metric-label {
-  font-size: clamp(0.5rem, 0.65vw, 0.68rem);
-  letter-spacing: 0.22em;
+  font-size: clamp(0.5rem, 0.62vw, 0.65rem);
+  letter-spacing: 0.24em;
   text-transform: uppercase;
-  color: var(--muted);
-  margin-bottom: 2px;
+  color: var(--panel-muted);
+  font-weight: 700;
+  margin-bottom: 4px;
 }
 
 .metric-value {
-  font-size: clamp(1.6rem, 3vw, 3.2rem);
-  font-weight: 700;
-  line-height: 1;
-  color: var(--text);
-  letter-spacing: -0.02em;
+  font-size: clamp(1.85rem, 3.3vw, 3.6rem);
+  font-weight: 800;
+  line-height: 0.95;
+  color: var(--panel-ink);
+  letter-spacing: -0.03em;
   font-variant-numeric: tabular-nums;
 }
 
 .metric-value--countdown {
-  color: var(--accent);
-  font-size: clamp(1.3rem, 2.2vw, 2.4rem);
+  font-size: clamp(1.4rem, 2.3vw, 2.4rem);
+  font-weight: 700;
+  letter-spacing: 0;
 }
 
 .metric-subvalue {
-  margin-top: 4px;
-  font-size: clamp(0.65rem, 0.85vw, 0.9rem);
-  color: var(--muted);
+  margin-top: 6px;
+  font-size: clamp(0.66rem, 0.85vw, 0.9rem);
+  color: var(--panel-muted);
+  font-weight: 500;
 }
 
 .timezone-clocks {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
-  gap: clamp(4px, 0.5vw, 8px);
-  margin-top: clamp(6px, 0.7vh, 12px);
-  flex: 1 1 auto;
-  align-items: end;
+  gap: clamp(6px, 0.65vw, 10px);
+  margin-top: clamp(10px, 1vh, 16px);
+  flex: 0 0 auto;
 }
 
 .timezone-card {
   background: var(--chip-bg);
-  border: 1px solid var(--panel-border);
-  border-radius: calc(var(--panel-radius, 16px) * 0.6);
-  padding: clamp(4px, 0.6vh, 10px) clamp(6px, 0.7vw, 12px);
+  border: 1px solid var(--chip-border);
+  border-radius: calc(var(--panel-radius, 18px) * 0.5);
+  padding: clamp(6px, 0.75vh, 10px) clamp(8px, 0.8vw, 12px);
   min-width: 0;
 }
 
 .timezone-label {
-  font-size: clamp(0.5rem, 0.65vw, 0.68rem);
-  color: var(--muted);
-  letter-spacing: 0.18em;
+  font-size: clamp(0.48rem, 0.6vw, 0.62rem);
+  color: var(--panel-muted);
+  letter-spacing: 0.22em;
   text-transform: uppercase;
+  font-weight: 700;
 }
 
 .timezone-time {
-  font-size: clamp(0.95rem, 1.4vw, 1.5rem);
-  font-weight: 600;
-  color: var(--text);
+  font-size: clamp(1rem, 1.4vw, 1.5rem);
+  font-weight: 700;
+  color: var(--panel-ink);
   font-variant-numeric: tabular-nums;
+  letter-spacing: -0.01em;
 }
 
 .timezone-name {
-  font-size: clamp(0.55rem, 0.7vw, 0.72rem);
-  color: var(--muted);
+  font-size: clamp(0.5rem, 0.66vw, 0.68rem);
+  color: var(--panel-muted);
+  font-weight: 500;
 }
 
-/* ---------------- Weather ---------------- */
+/* =============================================================
+   WEATHER PANEL
+   ============================================================= */
 
 .weather-current {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: clamp(6px, 0.8vw, 16px);
+  gap: clamp(8px, 1vw, 18px);
   flex: 0 0 auto;
 }
 
 .weather-temp-block {
   display: flex;
   align-items: center;
-  gap: clamp(8px, 0.9vw, 16px);
+  gap: clamp(10px, 1vw, 18px);
   min-width: 0;
 }
 
 .weather-temp {
-  font-size: clamp(2.2rem, 4vw, 4.4rem);
-  font-weight: 700;
-  color: var(--text);
-  letter-spacing: -0.03em;
-  line-height: 1;
+  font-size: clamp(2.4rem, 4.4vw, 4.8rem);
+  font-weight: 800;
+  color: var(--hue);
+  letter-spacing: -0.04em;
+  line-height: 0.9;
   font-variant-numeric: tabular-nums;
 }
 
@@ -292,83 +343,84 @@ body {
   display: flex;
   flex-direction: column;
   gap: 2px;
-  font-size: clamp(0.62rem, 0.8vw, 0.82rem);
-  color: var(--muted);
+  font-size: clamp(0.62rem, 0.78vw, 0.82rem);
+  color: var(--panel-muted);
   min-width: 0;
 }
 
 .weather-summary-title {
-  font-size: clamp(0.72rem, 0.95vw, 0.95rem);
-  font-weight: 600;
-  color: var(--text);
-  letter-spacing: 0.02em;
+  font-size: clamp(0.75rem, 0.95vw, 1rem);
+  font-weight: 700;
+  color: var(--panel-ink);
+  letter-spacing: 0;
 }
 
 .weather-highlight {
   display: flex;
-  gap: clamp(6px, 0.8vw, 12px);
+  gap: clamp(8px, 0.8vw, 12px);
   align-items: center;
-  padding: clamp(4px, 0.5vh, 10px) clamp(6px, 0.8vw, 14px);
+  padding: clamp(6px, 0.6vh, 10px) clamp(8px, 0.8vw, 14px);
   background: var(--chip-bg);
-  border: 1px solid var(--panel-border);
-  border-radius: calc(var(--panel-radius, 16px) * 0.6);
+  border: 1px solid var(--chip-border);
+  border-radius: calc(var(--panel-radius, 18px) * 0.55);
   min-width: 0;
 }
 
 .moon-svg {
-  width: clamp(28px, 3.4vw, 48px);
-  height: clamp(28px, 3.4vw, 48px);
+  width: clamp(32px, 3.6vw, 52px);
+  height: clamp(32px, 3.6vw, 52px);
   flex: 0 0 auto;
 }
 
-.weather-highlight-copy {
-  min-width: 0;
-}
+.weather-highlight-copy { min-width: 0; }
 
 .weather-highlight-title {
-  font-weight: 600;
-  color: var(--text);
-  font-size: clamp(0.7rem, 0.9vw, 0.9rem);
+  font-weight: 700;
+  color: var(--panel-ink);
+  font-size: clamp(0.72rem, 0.9vw, 0.92rem);
 }
 
 .weather-highlight-subtitle {
   font-size: clamp(0.55rem, 0.7vw, 0.72rem);
-  color: var(--muted);
+  color: var(--panel-muted);
 }
 
 .weather-details {
   display: grid;
   grid-template-columns: repeat(4, 1fr);
-  gap: clamp(4px, 0.5vw, 8px);
-  margin-top: clamp(6px, 0.7vh, 12px);
+  gap: clamp(6px, 0.6vw, 10px);
+  margin-top: clamp(10px, 1vh, 16px);
   flex: 0 0 auto;
 }
 
 .detail-card {
   background: var(--chip-bg);
-  border: 1px solid var(--panel-border);
-  border-radius: calc(var(--panel-radius, 16px) * 0.5);
-  padding: clamp(4px, 0.6vh, 10px) clamp(5px, 0.6vw, 10px);
+  border: 1px solid var(--chip-border);
+  border-radius: calc(var(--panel-radius, 18px) * 0.45);
+  padding: clamp(6px, 0.7vh, 10px) clamp(7px, 0.75vw, 11px);
   min-width: 0;
+  border-top: 2px solid var(--hue);
 }
 
 .detail-label {
-  font-size: clamp(0.48rem, 0.6vw, 0.6rem);
-  letter-spacing: 0.18em;
+  font-size: clamp(0.46rem, 0.58vw, 0.58rem);
+  letter-spacing: 0.22em;
   text-transform: uppercase;
-  color: var(--muted);
+  color: var(--panel-muted);
+  font-weight: 700;
 }
 
 .detail-value {
-  font-size: clamp(0.85rem, 1.2vw, 1.3rem);
-  font-weight: 600;
-  color: var(--text);
+  font-size: clamp(0.95rem, 1.25vw, 1.35rem);
+  font-weight: 700;
+  color: var(--panel-ink);
   line-height: 1.1;
+  font-variant-numeric: tabular-nums;
 }
 
 .detail-subtitle {
-  font-size: clamp(0.52rem, 0.65vw, 0.68rem);
-  color: var(--muted);
+  font-size: clamp(0.5rem, 0.64vw, 0.65rem);
+  color: var(--panel-muted);
 }
 
 .weather-hours {
@@ -376,17 +428,16 @@ body {
   grid-auto-flow: column;
   grid-auto-columns: minmax(0, 1fr);
   gap: clamp(4px, 0.5vw, 8px);
-  margin-top: clamp(6px, 0.7vh, 12px);
+  margin-top: clamp(8px, 0.8vh, 14px);
   overflow: hidden;
   flex: 1 1 auto;
   min-height: 0;
-  align-items: end;
 }
 
 .weather-hour {
   background: var(--chip-bg);
-  border: 1px solid var(--panel-border);
-  border-radius: calc(var(--panel-radius, 16px) * 0.5);
+  border: 1px solid var(--chip-border);
+  border-radius: calc(var(--panel-radius, 18px) * 0.4);
   padding: clamp(4px, 0.5vh, 8px) clamp(4px, 0.5vw, 8px);
   display: flex;
   flex-direction: column;
@@ -395,36 +446,43 @@ body {
   overflow: hidden;
 }
 
+/* Only render the first 4 weather hours to keep each card readable */
+.weather-hour:nth-child(n+5) { display: none; }
+
 .weather-hour-time {
-  font-size: clamp(0.5rem, 0.65vw, 0.68rem);
-  color: var(--muted);
-  letter-spacing: 0.1em;
+  font-size: clamp(0.5rem, 0.62vw, 0.66rem);
+  color: var(--panel-muted);
+  letter-spacing: 0.14em;
   text-transform: uppercase;
+  font-weight: 700;
 }
 
 .weather-hour-temp {
-  font-size: clamp(0.9rem, 1.15vw, 1.15rem);
-  font-weight: 600;
-  color: var(--text);
+  font-size: clamp(0.9rem, 1.1vw, 1.15rem);
+  font-weight: 700;
+  color: var(--panel-ink);
 }
 
 .weather-hour-extra {
-  font-size: clamp(0.5rem, 0.6vw, 0.65rem);
-  color: var(--muted);
+  font-size: clamp(0.48rem, 0.58vw, 0.62rem);
+  color: var(--panel-muted);
 }
 
-/* ---------------- Stocks ---------------- */
+/* =============================================================
+   STOCKS PANEL — each tile has its own brand color strip
+   ============================================================= */
 
 .stocks-grid {
   flex: 1 1 auto;
   display: grid;
   grid-auto-flow: column;
   grid-auto-columns: minmax(0, 1fr);
-  gap: clamp(4px, 0.6vw, 10px);
+  gap: clamp(6px, 0.7vw, 12px);
   min-height: 0;
 }
 
-body[data-layout="market-priority"] .stocks-grid {
+body[data-layout="paper"] .stocks-grid,
+body[data-layout="pastel"] .stocks-grid {
   grid-auto-flow: row;
   grid-template-columns: repeat(2, 1fr);
   grid-auto-rows: 1fr;
@@ -434,65 +492,109 @@ body[data-layout="market-priority"] .stocks-grid {
   display: flex;
   flex-direction: column;
   justify-content: space-between;
-  background: var(--chip-bg);
-  border: 1px solid var(--panel-border);
-  border-radius: calc(var(--panel-radius, 16px) * 0.6);
-  padding: clamp(6px, 0.7vh, 12px) clamp(6px, 0.8vw, 12px);
+  background: var(--stock-card-bg, var(--chip-bg));
+  border: 1px solid var(--chip-border);
+  border-radius: calc(var(--panel-radius, 18px) * 0.55);
+  padding: clamp(8px, 0.85vh, 14px) clamp(8px, 0.9vw, 14px);
   min-width: 0;
   overflow: hidden;
-  gap: 2px;
+  gap: 4px;
+  position: relative;
+  border-left: 4px solid var(--brand, var(--hue));
+}
+
+.stock-card-top {
+  display: flex;
+  align-items: center;
+  gap: clamp(6px, 0.6vw, 10px);
+  min-width: 0;
+}
+
+.stock-badge {
+  width: clamp(8px, 0.7vw, 10px);
+  height: clamp(8px, 0.7vw, 10px);
+  border-radius: 50%;
+  background: var(--brand, var(--hue));
+  flex: 0 0 auto;
+}
+
+.stock-identity {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  gap: 1px;
 }
 
 .stock-symbol {
-  font-size: clamp(0.62rem, 0.8vw, 0.85rem);
+  font-size: clamp(0.65rem, 0.82vw, 0.85rem);
   font-weight: 700;
-  color: var(--accent);
-  letter-spacing: 0.06em;
-}
-
-.stock-price {
-  font-size: clamp(1.1rem, 1.8vw, 1.9rem);
-  font-weight: 700;
-  color: var(--text);
-  line-height: 1;
-  font-variant-numeric: tabular-nums;
-}
-
-.stock-label {
-  font-size: clamp(0.5rem, 0.65vw, 0.68rem);
-  color: var(--muted);
+  color: var(--brand, var(--hue));
+  letter-spacing: 0.04em;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
 }
 
-.stock-change {
-  font-size: clamp(0.58rem, 0.75vw, 0.78rem);
-  font-weight: 600;
+.stock-label {
+  font-size: clamp(0.5rem, 0.64vw, 0.66rem);
+  color: var(--panel-muted);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  font-weight: 500;
+}
+
+.stock-price {
+  font-size: clamp(1.25rem, 1.9vw, 2.1rem);
+  font-weight: 800;
+  color: var(--panel-ink);
+  line-height: 1;
+  letter-spacing: -0.025em;
   font-variant-numeric: tabular-nums;
 }
 
+.stock-change {
+  font-size: clamp(0.62rem, 0.78vw, 0.82rem);
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.stock-arrow { font-size: 0.9em; }
+
 .stock-change.is-up { color: var(--up); }
 .stock-change.is-down { color: var(--down); }
-.stock-change.is-flat { color: var(--muted); }
+.stock-change.is-flat { color: var(--panel-muted); }
 
 .stock-basis {
   margin-top: 2px;
-  padding-top: 4px;
-  border-top: 1px dashed var(--panel-border);
+  padding-top: 6px;
+  border-top: 1px dashed var(--chip-border);
 }
 
 .stock-basis-label {
   font-size: clamp(0.5rem, 0.62vw, 0.65rem);
-  color: var(--muted);
-  letter-spacing: 0.04em;
+  color: var(--panel-muted);
+  letter-spacing: 0.02em;
+  font-weight: 500;
 }
 
-/* ---------------- Quotes ---------------- */
-
-.panel--quotes {
-  gap: 0;
+.stock-basis-change {
+  font-size: clamp(0.58rem, 0.74vw, 0.75rem);
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  margin-top: 2px;
 }
+
+.stock-basis-change.is-up { color: var(--up); }
+.stock-basis-change.is-down { color: var(--down); }
+.stock-basis-change.is-flat { color: var(--panel-muted); }
+
+/* =============================================================
+   QUOTES PANEL
+   ============================================================= */
 
 .quote-card,
 .bible-card {
@@ -502,28 +604,30 @@ body[data-layout="market-priority"] .stocks-grid {
   display: flex;
   flex-direction: column;
   justify-content: center;
-  gap: 4px;
+  gap: 6px;
   padding: clamp(6px, 0.6vh, 10px) 2px;
-  border-top: 1px solid transparent;
 }
 
 .bible-card {
-  border-top-color: var(--panel-border);
+  border-top: 1px solid var(--chip-border);
+  margin-top: clamp(4px, 0.5vh, 8px);
+  padding-top: clamp(8px, 0.8vh, 14px);
 }
 
 .quote-kicker {
   font-size: clamp(0.5rem, 0.62vw, 0.65rem);
-  letter-spacing: 0.2em;
+  letter-spacing: 0.26em;
   text-transform: uppercase;
-  color: var(--accent);
+  color: var(--hue);
+  font-weight: 700;
 }
 
 .quote-text {
-  font-size: clamp(0.75rem, 1.05vw, 1.1rem);
+  font-size: clamp(0.82rem, 1.1vw, 1.15rem);
   font-weight: 500;
-  color: var(--text);
+  color: var(--panel-ink);
   font-style: italic;
-  line-height: 1.35;
+  line-height: 1.4;
   overflow: hidden;
   display: -webkit-box;
   -webkit-line-clamp: 4;
@@ -536,12 +640,15 @@ body[data-layout="market-priority"] .stocks-grid {
 }
 
 .quote-author {
-  font-size: clamp(0.58rem, 0.72vw, 0.72rem);
-  color: var(--muted);
+  font-size: clamp(0.58rem, 0.72vw, 0.74rem);
+  color: var(--panel-muted);
   letter-spacing: 0.02em;
+  font-weight: 600;
 }
 
-/* ---------------- Telegram ---------------- */
+/* =============================================================
+   TELEGRAM PANEL
+   ============================================================= */
 
 .telegram-list {
   flex: 1 1 auto;
@@ -549,13 +656,13 @@ body[data-layout="market-priority"] .stocks-grid {
   overflow-y: auto;
   display: flex;
   flex-direction: column;
-  gap: clamp(4px, 0.4vh, 8px);
+  gap: clamp(5px, 0.5vh, 8px);
   padding-right: 2px;
 }
 
 .telegram-list::-webkit-scrollbar { width: 6px; }
 .telegram-list::-webkit-scrollbar-thumb {
-  background: var(--panel-border);
+  background: var(--chip-border);
   border-radius: 3px;
 }
 
@@ -564,87 +671,90 @@ body[data-layout="market-priority"] .stocks-grid {
   grid-template-columns: auto 1fr;
   gap: clamp(6px, 0.7vw, 12px);
   align-items: start;
-  padding: clamp(5px, 0.5vh, 9px) clamp(6px, 0.7vw, 10px);
+  padding: clamp(6px, 0.6vh, 9px) clamp(8px, 0.75vw, 12px);
   background: var(--chip-bg);
-  border: 1px solid var(--panel-border);
-  border-radius: calc(var(--panel-radius, 16px) * 0.5);
+  border: 1px solid var(--chip-border);
+  border-left: 3px solid var(--hue);
+  border-radius: calc(var(--panel-radius, 18px) * 0.45);
   min-width: 0;
 }
 
 .telegram-item-id {
   font-size: clamp(0.55rem, 0.7vw, 0.72rem);
-  color: var(--accent);
-  font-weight: 700;
+  color: var(--hue);
+  font-weight: 800;
   font-variant-numeric: tabular-nums;
   padding-top: 2px;
 }
 
 .telegram-item-text {
-  font-size: clamp(0.68rem, 0.85vw, 0.88rem);
-  color: var(--text);
+  font-size: clamp(0.72rem, 0.88vw, 0.9rem);
+  color: var(--panel-ink);
   word-break: break-word;
+  font-weight: 500;
 }
 
 .telegram-item-meta {
   grid-column: 2;
-  font-size: clamp(0.5rem, 0.62vw, 0.65rem);
-  color: var(--muted);
+  font-size: clamp(0.5rem, 0.62vw, 0.64rem);
+  color: var(--panel-muted);
   margin-top: 2px;
+  font-weight: 500;
 }
 
 .telegram-empty {
-  color: var(--muted);
-  font-size: clamp(0.6rem, 0.75vw, 0.78rem);
-  padding: clamp(6px, 0.8vh, 12px);
-  border: 1px dashed var(--panel-border);
-  border-radius: calc(var(--panel-radius, 16px) * 0.5);
+  color: var(--panel-muted);
+  font-size: clamp(0.65rem, 0.8vw, 0.82rem);
+  padding: clamp(10px, 1vh, 16px);
+  border: 1px dashed var(--chip-border);
+  border-radius: calc(var(--panel-radius, 18px) * 0.5);
   background: var(--chip-bg);
+  line-height: 1.4;
 }
 
 .telegram-empty code {
   background: var(--code-bg);
+  color: var(--code-ink);
   padding: 1px 5px;
   border-radius: 4px;
-  color: var(--accent);
   font-size: 0.9em;
 }
 
-/* ---------------- Calendar ---------------- */
+/* =============================================================
+   CALENDAR PANEL
+   ============================================================= */
 
 .panel--calendar {
-  padding: clamp(4px, 0.5vw, 8px);
-  gap: clamp(4px, 0.4vh, 8px);
+  padding: clamp(10px, 0.9vw, 16px);
+  gap: clamp(6px, 0.5vh, 10px);
 }
 
-.panel--calendar .panel-header {
-  padding: clamp(4px, 0.5vh, 8px) clamp(4px, 0.5vw, 8px);
-  margin-bottom: 0;
-}
+.panel--calendar .panel-header { margin-bottom: clamp(6px, 0.55vh, 10px); }
 
 .calendar-sources {
   display: flex;
   flex-wrap: wrap;
-  gap: clamp(3px, 0.35vw, 6px);
-  padding: 0 clamp(4px, 0.5vw, 8px) clamp(4px, 0.4vh, 6px);
+  gap: clamp(4px, 0.4vw, 7px);
   flex: 0 0 auto;
 }
 
 .calendar-source-pill {
   display: inline-flex;
   align-items: center;
-  gap: 4px;
-  padding: 2px clamp(4px, 0.5vw, 8px);
+  gap: 5px;
+  padding: 3px clamp(6px, 0.55vw, 9px);
   border-radius: 999px;
   background: var(--chip-bg);
-  border: 1px solid var(--panel-border);
-  font-size: clamp(0.5rem, 0.62vw, 0.65rem);
-  color: var(--muted);
+  border: 1px solid var(--chip-border);
+  font-size: clamp(0.5rem, 0.64vw, 0.66rem);
+  color: var(--panel-muted);
   letter-spacing: 0.04em;
+  font-weight: 600;
 }
 
 .calendar-source-dot {
-  width: 7px;
-  height: 7px;
+  width: 8px;
+  height: 8px;
   border-radius: 50%;
 }
 
@@ -652,9 +762,10 @@ body[data-layout="market-priority"] .stocks-grid {
   flex: 1 1 auto;
   min-height: 0;
   display: flex;
-  border-radius: calc(var(--panel-radius, 16px) * 0.6);
+  border-radius: calc(var(--panel-radius, 18px) * 0.6);
   overflow: hidden;
-  background: #fff;
+  background: #ffffff;
+  box-shadow: inset 0 0 0 1px rgba(15, 23, 42, 0.08);
 }
 
 .calendar-frame {
@@ -665,11 +776,12 @@ body[data-layout="market-priority"] .stocks-grid {
 }
 
 /* =============================================================
-   LAYOUTS — 5 grids, calendar always 30vw
+   GRID LAYOUTS — structural arrangement per theme.
+   Calendar column is always 30vw.
    ============================================================= */
 
-/* Layout 1: Overview — classic 3×3, calendar right */
-body[data-layout="overview"] .dashboard {
+/* 1. Daylight — classic 3-row left, calendar right */
+body[data-layout="daylight"] .dashboard {
   grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) 30vw;
   grid-template-rows: minmax(0, 1.05fr) minmax(0, 1fr) minmax(0, 1fr);
   grid-template-areas:
@@ -678,9 +790,9 @@ body[data-layout="overview"] .dashboard {
     "quotes   telegram calendar";
 }
 
-/* Layout 2: Calendar Focus — calendar LEFT */
-body[data-layout="calendar-priority"] .dashboard {
-  grid-template-columns: 30vw minmax(0, 1.1fr) minmax(0, 1fr);
+/* 2. Midnight — calendar LEFT */
+body[data-layout="midnight"] .dashboard {
+  grid-template-columns: 30vw minmax(0, 1.05fr) minmax(0, 1fr);
   grid-template-rows: minmax(0, 1fr) minmax(0, 1.1fr) minmax(0, 1fr);
   grid-template-areas:
     "calendar time    stocks"
@@ -688,8 +800,8 @@ body[data-layout="calendar-priority"] .dashboard {
     "calendar quotes  telegram";
 }
 
-/* Layout 3: Weather Hero — calendar right, weather dominates */
-body[data-layout="weather-priority"] .dashboard {
+/* 3. Pastel — weather hero, calendar right */
+body[data-layout="pastel"] .dashboard {
   grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) 30vw;
   grid-template-rows: minmax(0, 1.5fr) minmax(0, 1fr) minmax(0, 0.9fr);
   grid-template-areas:
@@ -698,18 +810,18 @@ body[data-layout="weather-priority"] .dashboard {
     "quotes   telegram calendar";
 }
 
-/* Layout 4: Market Mode — calendar right, stocks dominate */
-body[data-layout="market-priority"] .dashboard {
+/* 4. Paper — stocks hero, calendar right */
+body[data-layout="paper"] .dashboard {
   grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) 30vw;
-  grid-template-rows: minmax(0, 1.5fr) minmax(0, 1fr) minmax(0, 1fr);
+  grid-template-rows: minmax(0, 1.4fr) minmax(0, 1fr) minmax(0, 1fr);
   grid-template-areas:
     "stocks   stocks   calendar"
     "weather  time     calendar"
     "quotes   telegram calendar";
 }
 
-/* Layout 5: Cinematic — calendar right, time hero across top */
-body[data-layout="cinematic"] .dashboard {
+/* 5. Neon — time hero across top, calendar right */
+body[data-layout="neon"] .dashboard {
   grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) minmax(0, 1fr) 30vw;
   grid-template-rows: minmax(0, 1.1fr) minmax(0, 1fr) minmax(0, 0.9fr);
   grid-template-areas:
@@ -719,192 +831,276 @@ body[data-layout="cinematic"] .dashboard {
 }
 
 /* =============================================================
-   COLOR SCHEMES & PANEL TREATMENTS — one per layout
+   THEME 1 — "Daylight Board"
+   Light warm paper canvas, floating white cards with colored
+   top-accent bar. Inspired by the kitchen dashboard reference.
    ============================================================= */
 
-/* --- 1. Overview — Warm Sunset, soft rounded cards --- */
-body[data-layout="overview"] {
-  --bg: radial-gradient(circle at 20% 0%, #3d1a14 0%, #1b0a08 55%, #0a0403 100%);
-  --topbar-bg: rgba(25, 10, 8, 0.8);
-  --text: #fde3c6;
-  --muted: rgba(253, 227, 198, 0.55);
-  --accent: #fb923c;
-  --accent-border: rgba(251, 146, 60, 0.35);
-  --accent-fill: rgba(251, 146, 60, 0.15);
-  --accent-ink: #fed7aa;
-  --panel-bg: linear-gradient(160deg, rgba(255, 160, 100, 0.08), rgba(255, 80, 60, 0.04));
-  --panel-border: rgba(251, 146, 60, 0.18);
-  --panel-radius: 20px;
-  --panel-shadow: 0 10px 28px rgba(0, 0, 0, 0.35);
-  --chip-bg: rgba(255, 160, 100, 0.06);
-  --divider: rgba(251, 146, 60, 0.18);
-  --code-bg: rgba(251, 146, 60, 0.18);
-  --up: #fcd34d;
-  --down: #f87171;
-  --warning: #fbbf24;
-  --btn-radius: 999px;
+body[data-layout="daylight"] {
+  /* per-panel hues */
+  --hue-time:     #1d4ed8; /* deep blue */
+  --hue-weather:  #0ea5e9; /* sky */
+  --hue-stocks:   #047857; /* emerald */
+  --hue-quotes:   #b45309; /* amber */
+  --hue-telegram: #6d28d9; /* violet */
+  --hue-calendar: #475569; /* slate */
+
+  /* canvas */
+  --canvas-bg: linear-gradient(180deg, #f5efe2 0%, #ece4d2 100%);
+  --canvas-ink: #1e293b;
+  --canvas-muted: rgba(30, 41, 59, 0.6);
+  --topbar-bg: rgba(255, 255, 255, 0.6);
+  --divider: rgba(30, 41, 59, 0.1);
+
+  /* button */
+  --button-bg: #ffffff;
+  --button-border: rgba(30, 41, 59, 0.12);
+  --button-ink: #1e293b;
+  --button-radius: 999px;
+
+  /* panel */
+  --panel-bg: #ffffff;
+  --panel-ink: #0f172a;
+  --panel-muted: rgba(15, 23, 42, 0.55);
+  --panel-border: rgba(15, 23, 42, 0.06);
+  --panel-radius: 18px;
+  --panel-shadow:
+    0 1px 2px rgba(15, 23, 42, 0.05),
+    0 10px 28px -10px rgba(15, 23, 42, 0.2);
+
+  --chip-bg: #f8fafc;
+  --chip-border: rgba(15, 23, 42, 0.08);
+  --code-bg: rgba(29, 78, 216, 0.1);
+  --code-ink: #1d4ed8;
+  --up: #047857;
+  --down: #dc2626;
+  --warning: #b45309;
 }
 
-/* --- 2. Calendar Focus — Indigo Night, sharp minimalist cards --- */
-body[data-layout="calendar-priority"] {
-  --bg: linear-gradient(180deg, #06041a 0%, #120b2e 50%, #06041a 100%);
-  --topbar-bg: rgba(10, 6, 30, 0.8);
-  --text: #e9e6ff;
-  --muted: rgba(233, 230, 255, 0.5);
-  --accent: #a78bfa;
-  --accent-border: rgba(167, 139, 250, 0.4);
-  --accent-fill: rgba(167, 139, 250, 0.12);
-  --accent-ink: #ddd6fe;
-  --panel-bg: rgba(139, 92, 246, 0.05);
-  --panel-border: rgba(167, 139, 250, 0.25);
-  --panel-radius: 4px;
-  --panel-shadow: none;
-  --chip-bg: rgba(139, 92, 246, 0.08);
-  --divider: rgba(167, 139, 250, 0.2);
-  --code-bg: rgba(167, 139, 250, 0.2);
-  --up: #34d399;
-  --down: #f472b6;
-  --warning: #facc15;
-  --btn-radius: 4px;
-}
-
-body[data-layout="calendar-priority"] .panel {
-  border-width: 1px;
-  border-left-width: 3px;
-  border-left-color: rgba(167, 139, 250, 0.55);
-}
-
-/* --- 3. Weather Hero — Oceanic Glass, heavy blur glass cards --- */
-body[data-layout="weather-priority"] {
-  --bg: radial-gradient(circle at 70% 20%, #013e50 0%, #01263a 50%, #010b17 100%);
-  --topbar-bg: rgba(2, 25, 40, 0.6);
-  --text: #e0fbff;
-  --muted: rgba(224, 251, 255, 0.55);
-  --accent: #22d3ee;
-  --accent-border: rgba(34, 211, 238, 0.35);
-  --accent-fill: rgba(34, 211, 238, 0.12);
-  --accent-ink: #cffafe;
-  --panel-bg: rgba(34, 211, 238, 0.04);
-  --panel-border: rgba(34, 211, 238, 0.2);
-  --panel-radius: 24px;
-  --panel-shadow: 0 6px 30px rgba(2, 80, 100, 0.4);
-  --chip-bg: rgba(34, 211, 238, 0.08);
-  --divider: rgba(34, 211, 238, 0.2);
-  --code-bg: rgba(34, 211, 238, 0.18);
-  --up: #4ade80;
-  --down: #fb7185;
-  --warning: #facc15;
-  --btn-radius: 999px;
-}
-
-body[data-layout="weather-priority"] .panel {
-  backdrop-filter: blur(18px);
-  -webkit-backdrop-filter: blur(18px);
-}
-
-/* --- 4. Market Mode — Terminal green/amber, rectangular grid --- */
-body[data-layout="market-priority"] {
-  --bg: #000;
-  --topbar-bg: rgba(0, 0, 0, 0.9);
-  --text: #e5e7eb;
-  --muted: rgba(229, 231, 235, 0.5);
-  --accent: #22c55e;
-  --accent-border: rgba(34, 197, 94, 0.4);
-  --accent-fill: rgba(34, 197, 94, 0.08);
-  --accent-ink: #bbf7d0;
-  --panel-bg: rgba(34, 197, 94, 0.025);
-  --panel-border: rgba(34, 197, 94, 0.25);
-  --panel-radius: 2px;
-  --panel-shadow: none;
-  --chip-bg: rgba(234, 179, 8, 0.05);
-  --divider: rgba(34, 197, 94, 0.3);
-  --code-bg: rgba(234, 179, 8, 0.15);
-  --up: #22c55e;
-  --down: #ef4444;
-  --warning: #eab308;
-  --btn-radius: 2px;
-}
-
-body[data-layout="market-priority"] .metric-value,
-body[data-layout="market-priority"] .weather-temp,
-body[data-layout="market-priority"] .stock-price,
-body[data-layout="market-priority"] .stock-change,
-body[data-layout="market-priority"] .timezone-time,
-body[data-layout="market-priority"] .detail-value {
-  font-family: 'JetBrains Mono', 'Menlo', 'Fira Code', 'SF Mono', monospace;
-  letter-spacing: 0;
-}
-
-body[data-layout="market-priority"] .panel-header h2 {
-  color: var(--warning);
-}
-
-body[data-layout="market-priority"] .stock-symbol {
-  color: var(--warning);
-}
-
-/* --- 5. Cinematic — near-black with neon violet glow --- */
-body[data-layout="cinematic"] {
-  --bg: radial-gradient(at 20% 0%, #1a0b3b 0%, #0a0618 55%, #000 100%);
-  --topbar-bg: rgba(6, 2, 20, 0.85);
-  --text: #f5f3ff;
-  --muted: rgba(245, 243, 255, 0.5);
-  --accent: #c084fc;
-  --accent-border: rgba(192, 132, 252, 0.45);
-  --accent-fill: rgba(192, 132, 252, 0.12);
-  --accent-ink: #ede9fe;
-  --panel-bg: linear-gradient(160deg, rgba(30, 10, 60, 0.6), rgba(10, 5, 30, 0.8));
-  --panel-border: rgba(192, 132, 252, 0.25);
-  --panel-radius: 14px;
-  --panel-shadow: 0 0 24px rgba(168, 85, 247, 0.15),
-                  inset 0 0 0 1px rgba(192, 132, 252, 0.05);
-  --chip-bg: rgba(30, 10, 60, 0.5);
-  --divider: rgba(192, 132, 252, 0.2);
-  --code-bg: rgba(192, 132, 252, 0.2);
-  --up: #5eead4;
-  --down: #fb7185;
-  --warning: #f0abfc;
-  --btn-radius: 14px;
-}
-
-body[data-layout="cinematic"] .panel-header h2 {
-  background: linear-gradient(90deg, #c084fc, #06b6d4);
-  -webkit-background-clip: text;
-  background-clip: text;
-  color: transparent;
-}
-
-body[data-layout="cinematic"] #panel-time .metric-value {
-  background: linear-gradient(90deg, #f5f3ff, #c084fc 60%, #06b6d4);
-  -webkit-background-clip: text;
-  background-clip: text;
-  color: transparent;
-  text-shadow: 0 0 30px rgba(192, 132, 252, 0.4);
+body[data-layout="daylight"] .panel {
+  border-top: 4px solid var(--hue);
 }
 
 /* =============================================================
-   Viewport-specific compression for very small TV/monitor sizes
-   Never introduces scroll, just tightens clamps.
+   THEME 2 — "Midnight Desk"
+   Deep navy canvas, dark glass panels with hue-colored glow.
+   ============================================================= */
+
+body[data-layout="midnight"] {
+  --hue-time:     #60a5fa;
+  --hue-weather:  #22d3ee;
+  --hue-stocks:   #a3e635;
+  --hue-quotes:   #f59e0b;
+  --hue-telegram: #f472b6;
+  --hue-calendar: #c084fc;
+
+  --canvas-bg: radial-gradient(ellipse at top, #0f172a 0%, #050a1a 55%, #03060f 100%);
+  --canvas-ink: #e2e8f0;
+  --canvas-muted: rgba(226, 232, 240, 0.55);
+  --topbar-bg: rgba(2, 6, 23, 0.7);
+  --divider: rgba(148, 163, 184, 0.15);
+
+  --button-bg: rgba(255, 255, 255, 0.06);
+  --button-border: rgba(148, 163, 184, 0.3);
+  --button-ink: #e2e8f0;
+  --button-radius: 999px;
+
+  --panel-bg: linear-gradient(160deg, rgba(30, 41, 59, 0.6), rgba(15, 23, 42, 0.85));
+  --panel-ink: #f1f5f9;
+  --panel-muted: rgba(203, 213, 225, 0.6);
+  --panel-border: rgba(148, 163, 184, 0.18);
+  --panel-radius: 16px;
+  --panel-shadow:
+    0 12px 28px rgba(0, 0, 0, 0.45),
+    inset 0 1px 0 rgba(255, 255, 255, 0.04);
+
+  --chip-bg: rgba(148, 163, 184, 0.08);
+  --chip-border: rgba(148, 163, 184, 0.18);
+  --code-bg: rgba(96, 165, 250, 0.18);
+  --code-ink: #bfdbfe;
+  --up: #4ade80;
+  --down: #f87171;
+  --warning: #fbbf24;
+}
+
+body[data-layout="midnight"] .panel {
+  box-shadow:
+    0 12px 28px rgba(0, 0, 0, 0.45),
+    inset 0 1px 0 rgba(255, 255, 255, 0.04),
+    0 0 0 1px color-mix(in srgb, var(--hue) 25%, transparent);
+}
+
+/* =============================================================
+   THEME 3 — "Pastel Poster"
+   Cream canvas, each panel a flat saturated pastel block.
+   Dark ink text. Magazine spread vibe.
+   ============================================================= */
+
+body[data-layout="pastel"] {
+  --hue-time:     #fb7185;  /* coral */
+  --hue-weather:  #38bdf8;  /* sky */
+  --hue-stocks:   #34d399;  /* mint */
+  --hue-quotes:   #fbbf24;  /* butter */
+  --hue-telegram: #a78bfa;  /* lavender */
+  --hue-calendar: #fb923c;  /* tangerine */
+
+  --canvas-bg: linear-gradient(180deg, #fdf8ef 0%, #f6ecd8 100%);
+  --canvas-ink: #111827;
+  --canvas-muted: rgba(17, 24, 39, 0.6);
+  --topbar-bg: rgba(255, 255, 255, 0.7);
+  --divider: rgba(17, 24, 39, 0.1);
+
+  --button-bg: #111827;
+  --button-border: #111827;
+  --button-ink: #fef3c7;
+  --button-radius: 6px;
+
+  --panel-bg: color-mix(in srgb, var(--hue) 28%, white);
+  --panel-ink: #0b1220;
+  --panel-muted: rgba(11, 18, 32, 0.55);
+  --panel-border: transparent;
+  --panel-radius: 10px;
+  --panel-shadow: 4px 4px 0 rgba(17, 24, 39, 0.85);
+
+  --chip-bg: rgba(255, 255, 255, 0.65);
+  --chip-border: rgba(17, 24, 39, 0.18);
+  --code-bg: rgba(17, 24, 39, 0.12);
+  --code-ink: #0b1220;
+  --up: #059669;
+  --down: #dc2626;
+  --warning: #b45309;
+}
+
+body[data-layout="pastel"] .panel-header h2::before {
+  box-shadow: 0 0 0 2px rgba(17, 24, 39, 0.15);
+}
+
+body[data-layout="pastel"] .panel--calendar {
+  background: #ffffff;
+}
+
+/* =============================================================
+   THEME 4 — "Slate & Paper"
+   Slate gray canvas, pure white paper cards with strong shadow
+   and a colored LEFT accent strip.
+   ============================================================= */
+
+body[data-layout="paper"] {
+  --hue-time:     #0ea5e9;
+  --hue-weather:  #2563eb;
+  --hue-stocks:   #059669;
+  --hue-quotes:   #d97706;
+  --hue-telegram: #9333ea;
+  --hue-calendar: #475569;
+
+  --canvas-bg: linear-gradient(180deg, #3a4554 0%, #242b36 55%, #1a2029 100%);
+  --canvas-ink: #e5e7eb;
+  --canvas-muted: rgba(229, 231, 235, 0.6);
+  --topbar-bg: rgba(15, 20, 28, 0.7);
+  --divider: rgba(229, 231, 235, 0.1);
+
+  --button-bg: #ffffff;
+  --button-border: #ffffff;
+  --button-ink: #1f2937;
+  --button-radius: 6px;
+
+  --panel-bg: #ffffff;
+  --panel-ink: #111827;
+  --panel-muted: rgba(17, 24, 39, 0.55);
+  --panel-border: transparent;
+  --panel-radius: 14px;
+  --panel-shadow:
+    0 18px 40px -8px rgba(0, 0, 0, 0.55),
+    0 4px 6px -2px rgba(0, 0, 0, 0.15);
+
+  --chip-bg: #f8fafc;
+  --chip-border: rgba(17, 24, 39, 0.08);
+  --code-bg: rgba(14, 165, 233, 0.12);
+  --code-ink: #0369a1;
+  --up: #059669;
+  --down: #dc2626;
+  --warning: #d97706;
+}
+
+body[data-layout="paper"] .panel {
+  border-left: 5px solid var(--hue);
+}
+
+/* =============================================================
+   THEME 5 — "Neon Blueprint"
+   Near-black canvas, each panel has a neon hue glow and
+   thin hue outline — distinct for every panel.
+   ============================================================= */
+
+body[data-layout="neon"] {
+  --hue-time:     #ec4899;  /* magenta */
+  --hue-weather:  #3b82f6;  /* electric blue */
+  --hue-stocks:   #22c55e;  /* electric green */
+  --hue-quotes:   #eab308;  /* amber */
+  --hue-telegram: #8b5cf6;  /* violet */
+  --hue-calendar: #22d3ee;  /* cyan */
+
+  --canvas-bg: radial-gradient(at 50% 0%, #12081f 0%, #080313 55%, #000 100%);
+  --canvas-ink: #f8fafc;
+  --canvas-muted: rgba(248, 250, 252, 0.5);
+  --topbar-bg: rgba(8, 3, 19, 0.85);
+  --divider: rgba(248, 250, 252, 0.1);
+
+  --button-bg: transparent;
+  --button-border: #f8fafc;
+  --button-ink: #f8fafc;
+  --button-radius: 4px;
+
+  --panel-bg: linear-gradient(160deg, rgba(24, 15, 48, 0.7), rgba(8, 3, 19, 0.95));
+  --panel-ink: #f8fafc;
+  --panel-muted: rgba(226, 232, 240, 0.55);
+  --panel-border: color-mix(in srgb, var(--hue) 60%, transparent);
+  --panel-border-width: 1.5px;
+  --panel-radius: 8px;
+  --panel-shadow:
+    0 0 24px color-mix(in srgb, var(--hue) 25%, transparent),
+    inset 0 0 12px color-mix(in srgb, var(--hue) 8%, transparent);
+
+  --chip-bg: rgba(255, 255, 255, 0.03);
+  --chip-border: rgba(255, 255, 255, 0.08);
+  --code-bg: rgba(34, 211, 238, 0.15);
+  --code-ink: #67e8f9;
+  --up: #4ade80;
+  --down: #f472b6;
+  --warning: #fcd34d;
+}
+
+body[data-layout="neon"] .panel-header h2 {
+  color: var(--hue);
+  text-shadow: 0 0 8px color-mix(in srgb, var(--hue) 40%, transparent);
+}
+
+body[data-layout="neon"] .panel-header h2::before {
+  box-shadow:
+    0 0 0 3px color-mix(in srgb, var(--hue) 20%, transparent),
+    0 0 10px color-mix(in srgb, var(--hue) 50%, transparent);
+}
+
+body[data-layout="neon"] #panel-time .metric-value {
+  color: var(--hue-time);
+  text-shadow: 0 0 24px color-mix(in srgb, var(--hue-time) 45%, transparent);
+}
+
+body[data-layout="neon"] .weather-temp {
+  text-shadow: 0 0 20px color-mix(in srgb, var(--hue-weather) 45%, transparent);
+}
+
+/* =============================================================
+   Compression for tighter viewports — never enable scroll.
    ============================================================= */
 
 @media (max-height: 800px) {
-  .panel { padding: clamp(6px, 0.7vw, 14px); }
+  .panel { padding: clamp(10px, 0.9vw, 18px); }
   .weather-hours { display: none; }
 }
 
 @media (max-height: 680px) {
-  .timezone-clocks { grid-template-columns: repeat(3, 1fr); }
-  .weather-details { grid-template-columns: repeat(4, 1fr); }
   .quote-text { -webkit-line-clamp: 3; }
   .quote-text--bible { -webkit-line-clamp: 2; }
-}
-
-@media (max-width: 1100px) {
-  body[data-layout="cinematic"] .dashboard {
-    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) 30vw;
-    grid-template-areas:
-      "time     time     calendar"
-      "weather  stocks   calendar"
-      "quotes   telegram calendar";
-  }
+  .timezone-clocks { margin-top: 8px; }
 }

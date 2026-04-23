@@ -10,12 +10,23 @@ const nextLayoutButton = document.querySelector('#next-layout-button');
 const telegramList = document.querySelector('#telegram-list');
 
 const LAYOUTS = [
-  { id: 'overview', label: 'Overview' },
-  { id: 'calendar-priority', label: 'Calendar Priority' },
-  { id: 'weather-priority', label: 'Weather Priority' },
-  { id: 'market-priority', label: 'Market Priority' },
-  { id: 'cinematic', label: 'Cinematic' },
+  { id: 'daylight', label: 'Daylight Board' },
+  { id: 'midnight', label: 'Midnight Desk' },
+  { id: 'pastel', label: 'Pastel Poster' },
+  { id: 'paper', label: 'Slate & Paper' },
+  { id: 'neon', label: 'Neon Blueprint' },
 ];
+
+const STOCK_BRAND_COLORS = {
+  MSTR: '#2563eb',
+  'BTC-USD': '#f7931a',
+  'ETH-USD': '#627eea',
+};
+function getStockBrandColor(symbol = '') {
+  if (STOCK_BRAND_COLORS[symbol]) return STOCK_BRAND_COLORS[symbol];
+  if (symbol.startsWith('MSTR')) return '#10b981';
+  return '#64748b';
+}
 
 let dashboardConfig = null;
 let activeLayoutIndex = Number.parseInt(window.localStorage.getItem('tv-info-layout-index') || '0', 10);
@@ -249,20 +260,27 @@ function renderStocks(stocks) {
   const grid = document.querySelector('#stocks-grid');
   grid.innerHTML = stocks.quotes
     .map((quote) => {
+      const brandColor = getStockBrandColor(quote.symbol);
       const state = quote.dayChange > 0 ? 'is-up' : quote.dayChange < 0 ? 'is-down' : 'is-flat';
       const dayPercent = quote.dayPercentChange == null ? '' : ` (${formatSigned(quote.dayPercentChange)}%)`;
       const basisState = quote.basisChange > 0 ? 'is-up' : quote.basisChange < 0 ? 'is-down' : 'is-flat';
-      const fallbackLabel = quote.isFallback ? ' Demo data' : '';
+      const fallbackLabel = quote.isFallback ? ' · Demo' : '';
+      const arrow = quote.dayChange > 0 ? '▲' : quote.dayChange < 0 ? '▼' : '·';
       return `
-        <article class="stock-card">
-          <div class="stock-symbol">${quote.symbol}${fallbackLabel}</div>
+        <article class="stock-card" data-symbol="${quote.symbol}" style="--brand: ${brandColor}">
+          <div class="stock-card-top">
+            <span class="stock-badge" aria-hidden="true"></span>
+            <div class="stock-identity">
+              <div class="stock-symbol">${quote.symbol}${fallbackLabel}</div>
+              <div class="stock-label">${quote.label}</div>
+            </div>
+          </div>
           <div class="stock-price">${formatMoney(quote.price)}</div>
-          <div class="stock-label">${quote.label}</div>
-          <div class="stock-change ${state}">Day ${formatSigned(quote.dayChange)}${dayPercent}</div>
+          <div class="stock-change ${state}"><span class="stock-arrow">${arrow}</span> ${formatSigned(quote.dayChange)}${dayPercent}</div>
           ${quote.averageCost != null ? `
             <div class="stock-basis">
               <div class="stock-basis-label">${quote.averageCostLabel || `${formatMoney(quote.averageCost)} avg cost`}</div>
-              <div class="stock-change ${basisState}">Vs basis ${formatSigned(quote.basisPercentChange)}%</div>
+              <div class="stock-basis-change ${basisState}">Vs basis ${formatSigned(quote.basisPercentChange)}%</div>
             </div>
           ` : ''}
         </article>
