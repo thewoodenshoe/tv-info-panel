@@ -10,6 +10,8 @@ test('shows a visible pre-market stock state', async ({ page }) => {
   await expect(page.locator('.stock-session-badge').first()).toHaveText('PRE');
   await expect(page.locator('.stock-extended-label').first()).toHaveText('Pre-market');
   await expect(page.locator('.stock-extended-price').first()).toContainText('$');
+  await expect(page.locator('.stock-card[data-symbol="MSTR"] .stock-price')).toHaveClass(/is-up/);
+  await expect(page.locator('.stock-card[data-symbol="BTC"] .stock-price')).toHaveClass(/is-down/);
 });
 
 test('shows a visible after-hours stock state', async ({ page }) => {
@@ -20,4 +22,5 @@ test('shows a visible after-hours stock state', async ({ page }) => {
   await expect(page.locator('.stock-session-badge').first()).toHaveText('AH');
   await expect(page.locator('.stock-extended-label').first()).toHaveText('After hours');
   await expect(page.locator('.stock-extended-price').first()).toContainText('$');
+  await expect(page.locator('.stock-extended').first()).toHaveClass(/is-down/);
 });

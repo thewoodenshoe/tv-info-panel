@@ -18,6 +18,8 @@ const defaultTelegramStorePath = path.join(rootDir, 'data', 'telegram-panel.loca
 const legacyTelegramStorePath = path.join(rootDir, 'data', 'telegram-panel.json');
 
 const PORT = Number.parseInt(process.env.PORT || '3030', 10);
+const TELEGRAM_POLL_INTERVAL_MS = 2000;
+const TELEGRAM_FETCH_TIMEOUT_MS = 3500;
 const TELEGRAM_BOT_TOKEN = process.env.TELEGRAM_BOT_TOKEN?.trim() || '';
 const TELEGRAM_ALLOWED_CHAT_IDS = new Set(
   (process.env.TELEGRAM_ALLOWED_CHAT_IDS || '')
@@ -918,7 +920,10 @@ async function pollTelegramOnce() {
   url.searchParams.set('allowed_updates', JSON.stringify(['message', 'edited_message']));
   if (state.lastUpdateId) url.searchParams.set('offset', String(state.lastUpdateId));
 
-  const response = await fetch(url);
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), TELEGRAM_FETCH_TIMEOUT_MS);
+  const response = await fetch(url, { signal: controller.signal })
+    .finally(() => clearTimeout(timeout));
   if (!response.ok) {
     throw new Error(`Telegram polling failed with HTTP ${response.status}`);
   }
@@ -942,7 +947,7 @@ function startTelegramPolling() {
     } catch (error) {
       console.error('[telegram-panel] error:', error?.message, '| cause:', error?.cause, '| stack:', error?.stack?.split('\n').slice(0, 4).join(' | '));
     } finally {
-      telegramPollTimer = setTimeout(tick, 3000);
+      telegramPollTimer = setTimeout(tick, TELEGRAM_POLL_INTERVAL_MS);
     }
   };
 

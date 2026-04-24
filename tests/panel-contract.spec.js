@@ -50,11 +50,14 @@ for (const viewport of viewports) {
       await expect(page.locator('.calendar-source-pill')).toHaveCount(5);
       await expect(page.locator('.timezone-card')).toHaveCount(3);
       await expect(page.locator('.calendar-event').first()).toBeVisible();
+      await expect(page.locator('.calendar-day-group')).toHaveCount(5);
       await expect(page.locator('.calendar-day-group').first()).toBeVisible();
 
       await expect(page.locator('.stock-card')).toHaveCount(4);
       await expect(page.locator('.stock-basis')).toHaveCount(1);
       await expect(page.locator('.stock-extended')).toHaveCount(1);
+      await expect(page.locator('.stock-card[data-symbol="MSTR"] .stock-price')).toHaveClass(/is-up/);
+      await expect(page.locator('.stock-card[data-symbol="BTC"] .stock-price')).toHaveClass(/is-down/);
 
       const telegramItems = page.locator('.telegram-item');
       const telegramEmpty = page.locator('.telegram-empty');

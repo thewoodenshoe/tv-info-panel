@@ -2145,3 +2145,1052 @@ body[data-layout="neon"] {
     display: none;
   }
 }
+
+/* =============================================================
+   2026 TV fit + five-board composition pass.
+   This final layer intentionally overrides earlier experiments:
+   fixed TV typography, workweek calendar rows, compact market tiles,
+   and five visually distinct board compositions.
+   ============================================================= */
+
+body[data-display="tv"] {
+  font-size: clamp(12px, 0.82vw, 15px);
+  -webkit-text-size-adjust: 100%;
+  text-size-adjust: 100%;
+}
+
+body[data-display="tv"] *,
+body[data-display="tv"] *::before,
+body[data-display="tv"] *::after {
+  -webkit-text-size-adjust: 100%;
+  text-size-adjust: 100%;
+}
+
+body[data-display="tv"] .app-shell {
+  gap: clamp(8px, 1.1vh, 12px);
+  padding:
+    max(18px, 2.4vh)
+    max(28px, 3.2vw)
+    max(22px, 3vh);
+}
+
+body[data-display="tv"] .topbar {
+  display: flex;
+  flex: 0 0 clamp(40px, 5.2vh, 52px);
+  height: clamp(40px, 5.2vh, 52px);
+  min-height: 0;
+}
+
+body[data-display="tv"] .brand-block .eyebrow {
+  font-size: clamp(0.52rem, 0.66vw, 0.68rem);
+}
+
+body[data-display="tv"] .brand-block h1 {
+  font-size: clamp(0.9rem, 1.15vw, 1.08rem);
+}
+
+body[data-display="tv"] .layout-switcher {
+  gap: clamp(8px, 1vw, 12px);
+}
+
+body[data-display="tv"] .layout-copy strong {
+  font-size: clamp(0.78rem, 1vw, 0.95rem);
+}
+
+body[data-display="tv"] .layout-button {
+  min-width: clamp(64px, 5.4vw, 82px);
+  min-height: clamp(34px, 4.1vh, 42px);
+  padding: 0 clamp(12px, 1.1vw, 18px);
+  font-size: clamp(0.72rem, 0.9vw, 0.84rem);
+}
+
+body[data-display="tv"] .dashboard,
+body[data-density="compact"] .dashboard {
+  gap: clamp(8px, 0.8vw, 12px);
+  min-height: 0;
+}
+
+body[data-display="tv"] .panel,
+body[data-density="compact"] .panel {
+  padding: clamp(9px, 0.78vw, 13px);
+}
+
+body[data-display="tv"] .panel-header {
+  margin-bottom: clamp(5px, 0.7vh, 8px);
+}
+
+body[data-display="tv"] .panel-header h2 {
+  font-size: clamp(0.62rem, 1vw, 0.76rem);
+  line-height: 1.1;
+}
+
+body[data-display="tv"] .panel-meta {
+  font-size: clamp(0.52rem, 0.78vw, 0.62rem);
+  line-height: 1;
+}
+
+body[data-display="tv"] .metric-label,
+body[data-display="tv"] .quote-kicker,
+body[data-display="tv"] .detail-label,
+body[data-display="tv"] .calendar-event-time {
+  font-size: clamp(0.48rem, 0.72vw, 0.6rem);
+}
+
+body[data-display="tv"] .metric-value {
+  font-size: clamp(1.55rem, 5.2vw, 3.35rem);
+  line-height: 1.04;
+}
+
+body[data-display="tv"] .metric-value--countdown {
+  font-size: clamp(1.05rem, 3.2vw, 1.85rem);
+}
+
+body[data-display="tv"] .metric-subvalue,
+body[data-display="tv"] .timezone-name,
+body[data-display="tv"] .weather-summary,
+body[data-display="tv"] .detail-subtitle,
+body[data-display="tv"] .quote-author,
+body[data-display="tv"] .calendar-event-meta {
+  font-size: clamp(0.56rem, 0.78vw, 0.68rem);
+}
+
+body[data-display="tv"] .time-grid {
+  gap: clamp(6px, 0.7vw, 10px);
+}
+
+body[data-display="tv"] .timezone-clocks {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: clamp(4px, 0.48vw, 7px);
+  margin-top: clamp(6px, 0.75vh, 10px);
+}
+
+body[data-display="tv"] .timezone-card {
+  padding: clamp(5px, 0.5vw, 7px);
+}
+
+body[data-display="tv"] .timezone-time {
+  font-size: clamp(0.78rem, 1.4vw, 1.12rem);
+}
+
+body[data-display="tv"] .weather-current {
+  grid-template-columns: minmax(0, 1.15fr) minmax(0, 0.85fr);
+  gap: clamp(6px, 0.65vw, 10px);
+}
+
+body[data-display="tv"] .weather-glyph {
+  width: clamp(38px, 3.4vw, 56px);
+  height: clamp(42px, 3.7vw, 62px);
+}
+
+body[data-display="tv"] .weather-temp {
+  font-size: clamp(1.95rem, 5.4vw, 3.9rem);
+  line-height: 1.02;
+}
+
+body[data-display="tv"] .weather-feels {
+  font-size: clamp(0.58rem, 0.82vw, 0.72rem);
+}
+
+body[data-display="tv"] .weather-summary-title {
+  font-size: clamp(0.76rem, 1.05vw, 0.92rem);
+  line-height: 1.05;
+}
+
+body[data-display="tv"] .weather-highlight {
+  padding: clamp(5px, 0.55vw, 8px);
+}
+
+body[data-display="tv"] .weather-details {
+  gap: clamp(5px, 0.52vw, 8px);
+  margin-top: clamp(6px, 0.7vh, 9px);
+}
+
+body[data-display="tv"] .detail-card {
+  padding: clamp(5px, 0.5vw, 7px);
+}
+
+body[data-display="tv"] .detail-value {
+  font-size: clamp(0.78rem, 1.35vw, 1.08rem);
+}
+
+body[data-display="tv"] .weather-hours {
+  display: none;
+}
+
+body[data-display="tv"] .stocks-grid {
+  --stock-columns: 2;
+  gap: clamp(5px, 0.58vw, 8px);
+}
+
+body[data-display="tv"] .stock-card {
+  padding: clamp(7px, 0.62vw, 10px);
+}
+
+body[data-display="tv"] .stock-card-core {
+  gap: clamp(2px, 0.28vh, 4px);
+  padding: clamp(3px, 0.38vh, 6px) 0;
+}
+
+body[data-display="tv"] .stock-symbol {
+  font-size: clamp(0.58rem, 0.9vw, 0.76rem);
+}
+
+body[data-display="tv"] .stock-label {
+  font-size: clamp(0.48rem, 0.72vw, 0.6rem);
+  -webkit-line-clamp: 1;
+}
+
+body[data-display="tv"] .stock-price {
+  font-size: clamp(0.92rem, 1.85vw, 1.42rem);
+}
+
+.stock-price.is-up { color: var(--up); }
+.stock-price.is-down { color: var(--down); }
+.stock-price.is-flat { color: var(--panel-ink); }
+
+body[data-display="tv"] .stock-change,
+body[data-display="tv"] .stock-extended,
+body[data-display="tv"] .stock-basis-change,
+body[data-display="tv"] .stock-basis-label {
+  font-size: clamp(0.48rem, 0.7vw, 0.6rem);
+}
+
+body[data-display="tv"] .stock-basis {
+  padding-top: clamp(3px, 0.36vh, 5px);
+}
+
+body[data-display="tv"] .quote-card,
+body[data-display="tv"] .bible-card {
+  gap: clamp(3px, 0.35vh, 6px);
+  padding: clamp(3px, 0.35vh, 6px) 0;
+}
+
+body[data-display="tv"] .quote-text {
+  font-size: clamp(0.66rem, 1.02vw, 0.9rem);
+  line-height: 1.28;
+  -webkit-line-clamp: 3;
+}
+
+body[data-display="tv"] .quote-text--bible {
+  -webkit-line-clamp: 2;
+}
+
+body[data-display="tv"] .telegram-list {
+  gap: clamp(5px, 0.5vh, 7px);
+}
+
+body[data-display="tv"] .telegram-item {
+  grid-template-columns: 10px minmax(0, 1fr);
+  padding: clamp(6px, 0.6vw, 9px);
+}
+
+body[data-display="tv"] .telegram-item-text {
+  font-size: clamp(0.62rem, 0.94vw, 0.82rem);
+  line-height: 1.22;
+  -webkit-line-clamp: 2;
+}
+
+body[data-display="tv"] .calendar-sources {
+  gap: clamp(4px, 0.42vw, 6px);
+}
+
+body[data-display="tv"] .calendar-source-pill {
+  font-size: clamp(0.48rem, 0.68vw, 0.58rem);
+  padding: 3px clamp(5px, 0.52vw, 7px);
+}
+
+.calendar-agenda--workweek {
+  display: grid;
+  grid-template-rows: repeat(5, minmax(0, 1fr));
+  gap: clamp(5px, 0.62vh, 8px);
+}
+
+.calendar-agenda--workweek .calendar-day-group {
+  min-height: 0;
+  overflow: hidden;
+  gap: clamp(3px, 0.38vh, 5px);
+}
+
+.calendar-agenda--workweek .calendar-day-header {
+  flex: 0 0 auto;
+}
+
+.calendar-agenda--workweek .calendar-events {
+  min-height: 0;
+  overflow: hidden;
+  gap: clamp(3px, 0.34vh, 5px);
+}
+
+.calendar-agenda--workweek .calendar-event {
+  flex: 0 0 auto;
+  padding: clamp(4px, 0.44vw, 7px) clamp(5px, 0.5vw, 8px);
+}
+
+.calendar-agenda--workweek .calendar-event-time {
+  font-size: clamp(0.44rem, 0.62vw, 0.54rem);
+  line-height: 1;
+}
+
+.calendar-agenda--workweek .calendar-event-title {
+  display: block;
+  font-size: clamp(0.58rem, 0.78vw, 0.72rem);
+  line-height: 1.08;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+.calendar-agenda--workweek .calendar-event-meta {
+  display: none;
+}
+
+body[data-display="tv"] .calendar-day-title {
+  font-size: clamp(0.52rem, 0.8vw, 0.66rem);
+}
+
+body[data-display="tv"] .calendar-day-date {
+  font-size: clamp(0.48rem, 0.68vw, 0.58rem);
+}
+
+body[data-display="tv"] .calendar-event {
+  gap: clamp(6px, 0.58vw, 9px);
+  padding: clamp(5px, 0.5vw, 7px);
+}
+
+body[data-display="tv"] .calendar-event-title {
+  font-size: clamp(0.62rem, 0.9vw, 0.78rem);
+  line-height: 1.12;
+  -webkit-line-clamp: 1;
+}
+
+.calendar-empty-day {
+  display: flex;
+  align-items: center;
+  min-height: 0;
+  height: 100%;
+  padding: clamp(5px, 0.52vw, 8px);
+  border: 1px dashed var(--chip-border);
+  border-radius: calc(var(--panel-radius, 18px) * 0.45);
+  color: var(--panel-muted);
+  background: var(--chip-bg);
+  font-size: clamp(0.54rem, 0.8vw, 0.68rem);
+  font-weight: 650;
+}
+
+body[data-display="tv"] .calendar-overflow-notice {
+  display: none;
+}
+
+/* Home View: kitchen-display style, soft blue canvas, calendar as the main column. */
+body[data-layout="daylight"] .dashboard {
+  grid-template-columns: minmax(0, 1.18fr) minmax(0, 0.82fr) minmax(0, 0.82fr);
+  grid-template-rows: minmax(0, 0.78fr) minmax(0, 0.92fr) minmax(0, 0.76fr);
+  grid-template-areas:
+    "calendar time     weather"
+    "calendar stocks   stocks"
+    "calendar quotes   telegram";
+}
+
+body[data-layout="daylight"] {
+  --hue-time: #385a7c;
+  --hue-weather: #1d8fcf;
+  --hue-stocks: #25966f;
+  --hue-quotes: #8b6fcb;
+  --hue-telegram: #d7897f;
+  --hue-calendar: #4f8bd8;
+  --canvas-bg:
+    radial-gradient(circle at 18% 8%, rgba(255,255,255,0.9), transparent 24%),
+    linear-gradient(135deg, #dcecff 0%, #eaf4ff 48%, #d7e6f8 100%);
+  --canvas-ink: #223044;
+  --canvas-muted: rgba(34,48,68,0.58);
+  --panel-bg: rgba(255,255,255,0.76);
+  --panel-ink: #24364d;
+  --panel-muted: rgba(36,54,77,0.58);
+  --panel-border: rgba(255,255,255,0.84);
+  --panel-radius: 28px;
+  --panel-shadow: 0 20px 48px -32px rgba(45,72,110,0.42);
+  --chip-bg: rgba(255,255,255,0.56);
+  --chip-border: rgba(76,103,139,0.12);
+  --up: #15803d;
+  --down: #dc2626;
+  --weather-temp-color: #1f6f99;
+}
+
+body[data-layout="daylight"] .panel {
+  border-top: 0;
+}
+
+body[data-layout="daylight"] #panel-calendar {
+  background: rgba(255,255,255,0.82);
+  border-radius: 34px;
+}
+
+body[data-layout="daylight"] #panel-weather {
+  background:
+    radial-gradient(circle at 88% 12%, rgba(255,255,255,0.9), transparent 20%),
+    linear-gradient(145deg, rgba(211,241,255,0.9), rgba(255,255,255,0.72));
+}
+
+body[data-layout="daylight"] #panel-stocks .stocks-grid {
+  --stock-columns: 4;
+}
+
+/* Market Map: keep the darker financial-board feel, but make values readable. */
+body[data-layout="midnight"] .dashboard {
+  grid-template-columns: minmax(0, 1.05fr) minmax(0, 1fr) minmax(0, 0.82fr);
+  grid-template-rows: minmax(0, 0.92fr) minmax(0, 0.9fr) minmax(0, 0.72fr);
+  grid-template-areas:
+    "stocks   stocks   calendar"
+    "weather  time     calendar"
+    "telegram quotes   calendar";
+}
+
+body[data-layout="midnight"] {
+  --canvas-bg:
+    radial-gradient(circle at 80% 4%, rgba(56,189,248,0.22), transparent 24%),
+    linear-gradient(135deg, #061527 0%, #0b1325 45%, #05070d 100%);
+  --panel-bg: rgba(10, 25, 45, 0.86);
+  --panel-border: rgba(120, 190, 255, 0.16);
+  --panel-radius: 18px;
+  --panel-shadow: 0 22px 54px -32px rgba(0,0,0,0.88);
+  --chip-bg: rgba(255,255,255,0.055);
+  --chip-border: rgba(148,211,255,0.14);
+  --up: #58d68d;
+  --down: #ff6b7a;
+}
+
+body[data-layout="midnight"] #panel-stocks {
+  background:
+    linear-gradient(135deg, rgba(40,77,112,0.72), rgba(5,13,28,0.92)),
+    rgba(10,25,45,0.86);
+}
+
+/* Coastal Outlook: ocean/weather-first board, not another white card grid. */
+body[data-layout="pastel"] .dashboard {
+  grid-template-columns: minmax(0, 1.04fr) minmax(0, 0.82fr) minmax(0, 0.96fr);
+  grid-template-rows: minmax(0, 1fr) minmax(0, 0.76fr) minmax(0, 0.74fr);
+  grid-template-areas:
+    "weather  weather  calendar"
+    "time     stocks   calendar"
+    "telegram quotes   calendar";
+}
+
+body[data-layout="pastel"] {
+  --hue-time: #0f766e;
+  --hue-weather: #0284c7;
+  --hue-stocks: #16a34a;
+  --hue-quotes: #ea580c;
+  --hue-telegram: #7c3aed;
+  --hue-calendar: #0e7490;
+  --canvas-bg:
+    radial-gradient(circle at 20% 0%, rgba(186,230,253,0.95), transparent 30%),
+    linear-gradient(160deg, #dff7ff 0%, #eefdfa 44%, #fff7ed 100%);
+  --canvas-ink: #14313f;
+  --canvas-muted: rgba(20,49,63,0.58);
+  --button-bg: #123646;
+  --button-border: rgba(18,54,70,0.24);
+  --button-ink: #ffffff;
+  --panel-bg: rgba(255,255,255,0.68);
+  --panel-ink: #123646;
+  --panel-muted: rgba(18,54,70,0.58);
+  --panel-border: rgba(255,255,255,0.62);
+  --panel-radius: 24px;
+  --panel-shadow: 0 20px 52px -34px rgba(18,54,70,0.48);
+  --chip-bg: rgba(255,255,255,0.5);
+  --chip-border: rgba(14,116,144,0.12);
+  --weather-temp-color: #075985;
+}
+
+body[data-layout="pastel"] #panel-weather {
+  background:
+    radial-gradient(circle at 78% 20%, rgba(255,255,255,0.76), transparent 18%),
+    linear-gradient(140deg, rgba(14,165,233,0.86), rgba(125,211,252,0.68) 44%, rgba(240,253,250,0.86));
+  color: #082f49;
+}
+
+body[data-layout="pastel"] #panel-weather .weather-hours {
+  display: none;
+}
+
+body[data-layout="pastel"] #panel-calendar {
+  background: rgba(236,253,245,0.76);
+}
+
+/* Agenda Wall: editorial layout with the workweek in the central spine. */
+body[data-layout="paper"] .dashboard {
+  grid-template-columns: minmax(0, 0.78fr) minmax(0, 1.28fr) minmax(0, 0.84fr);
+  grid-template-rows: minmax(0, 0.74fr) minmax(0, 0.9fr) minmax(0, 0.78fr);
+  grid-template-areas:
+    "weather  calendar time"
+    "telegram calendar stocks"
+    "quotes   calendar stocks";
+}
+
+body[data-layout="paper"] {
+  --hue-time: #1d4ed8;
+  --hue-weather: #0f766e;
+  --hue-stocks: #166534;
+  --hue-quotes: #9f1239;
+  --hue-telegram: #6d28d9;
+  --hue-calendar: #1f2937;
+  --canvas-bg:
+    linear-gradient(90deg, rgba(31,41,55,0.08) 1px, transparent 1px),
+    linear-gradient(180deg, #f2eee6 0%, #e6ddd0 100%);
+  --canvas-ink: #1f2937;
+  --canvas-muted: rgba(31,41,55,0.58);
+  --panel-bg: rgba(255,252,246,0.9);
+  --panel-ink: #1f2937;
+  --panel-muted: rgba(31,41,55,0.56);
+  --panel-border: rgba(86,71,52,0.12);
+  --panel-radius: 16px;
+  --panel-shadow: 0 18px 42px -32px rgba(31,41,55,0.5);
+  --chip-bg: rgba(255,255,255,0.54);
+  --chip-border: rgba(86,71,52,0.12);
+}
+
+body[data-layout="paper"] .panel {
+  border-left: 0;
+  border-top: 5px solid var(--hue);
+}
+
+body[data-layout="paper"] #panel-calendar {
+  border-top-width: 8px;
+  background: rgba(255,255,255,0.94);
+}
+
+body[data-layout="paper"] #panel-stocks .stocks-grid {
+  --stock-columns: 1;
+}
+
+/* Night Operations: high-contrast operations room; preserve the liked visual language. */
+body[data-layout="neon"] .dashboard {
+  grid-template-columns: minmax(0, 0.88fr) minmax(0, 1.12fr) minmax(0, 0.9fr);
+  grid-template-rows: minmax(0, 0.78fr) minmax(0, 0.96fr) minmax(0, 0.76fr);
+  grid-template-areas:
+    "time     time     calendar"
+    "weather  stocks   calendar"
+    "quotes   telegram calendar";
+}
+
+body[data-layout="neon"] {
+  --canvas-bg:
+    radial-gradient(circle at 15% 14%, rgba(34,211,238,0.18), transparent 25%),
+    radial-gradient(circle at 85% 8%, rgba(244,114,182,0.16), transparent 24%),
+    linear-gradient(135deg, #06111f 0%, #0a0f1b 50%, #030306 100%);
+  --panel-bg: rgba(7, 13, 28, 0.84);
+  --panel-radius: 16px;
+  --chip-bg: rgba(255,255,255,0.052);
+  --chip-border: rgba(255,255,255,0.11);
+  --up: #65f29a;
+  --down: #ff6a8e;
+}
+
+body[data-layout="neon"] #panel-time {
+  background: linear-gradient(120deg, rgba(14,116,144,0.38), rgba(7,13,28,0.86));
+}
+
+@media (max-height: 800px) {
+  body[data-display="tv"] .app-shell {
+    padding:
+      max(14px, 2vh)
+      max(22px, 2.7vw)
+      max(16px, 2.25vh);
+  }
+
+  body[data-display="tv"] .topbar {
+    flex-basis: 38px;
+    height: 38px;
+  }
+
+  body[data-display="tv"] .dashboard,
+  body[data-density="compact"] .dashboard {
+    gap: 8px;
+  }
+
+  body[data-display="tv"] .panel,
+  body[data-density="compact"] .panel {
+    padding: 8px;
+  }
+
+  body[data-display="tv"] .calendar-source-pill:nth-child(n+5) {
+    display: none;
+  }
+
+  body[data-display="tv"] .calendar-event {
+    padding: 4px 6px;
+  }
+
+  body[data-display="tv"] .calendar-event-meta,
+  body[data-display="tv"] .calendar-event-location,
+  body[data-display="tv"] .detail-subtitle {
+    display: none;
+  }
+
+  body[data-display="tv"] .quote-text {
+    -webkit-line-clamp: 2;
+  }
+
+  body[data-display="tv"] .telegram-item-text {
+    -webkit-line-clamp: 2;
+  }
+}
+
+/* Fire OS WebView fallback: older WebViews are inconsistent with clamp(),
+   container units, and text scaling. Keep this last and deliberately plain. */
+body[data-display="tv"] {
+  font-size: 14px;
+}
+
+body[data-display="tv"] .app-shell {
+  gap: 10px;
+  padding: 24px 52px 32px;
+}
+
+body[data-display="tv"] .topbar {
+  flex-basis: 48px;
+  height: 48px;
+}
+
+body[data-display="tv"] .dashboard {
+  gap: 12px;
+}
+
+body[data-display="tv"] .panel {
+  padding: 12px;
+}
+
+body[data-display="tv"] .panel-header {
+  margin-bottom: 7px;
+}
+
+body[data-display="tv"] .panel-header h2 {
+  font-size: 16px;
+}
+
+body[data-display="tv"] .panel-meta {
+  font-size: 12px;
+}
+
+body[data-display="tv"] .metric-label,
+body[data-display="tv"] .quote-kicker,
+body[data-display="tv"] .detail-label,
+body[data-display="tv"] .calendar-event-time {
+  font-size: 11px;
+}
+
+body[data-display="tv"] .metric-value {
+  font-size: 58px;
+  line-height: 0.98;
+}
+
+body[data-display="tv"] .metric-value--countdown {
+  font-size: 31px;
+  line-height: 1;
+}
+
+body[data-display="tv"] .metric-subvalue {
+  font-size: 14px;
+  margin-top: 5px;
+}
+
+body[data-display="tv"] .timezone-clocks {
+  gap: 6px;
+  margin-top: 8px;
+}
+
+body[data-display="tv"] .timezone-card {
+  padding: 5px 7px;
+}
+
+body[data-display="tv"] .timezone-label,
+body[data-display="tv"] .timezone-name {
+  font-size: 11px;
+  line-height: 1.05;
+}
+
+body[data-display="tv"] .timezone-time {
+  font-size: 22px;
+  line-height: 1.05;
+}
+
+body[data-display="tv"] .weather-temp {
+  font-size: 62px;
+  line-height: 0.98;
+}
+
+body[data-display="tv"] .weather-glyph {
+  width: 52px;
+  height: 56px;
+}
+
+body[data-display="tv"] .weather-summary,
+body[data-display="tv"] .detail-subtitle,
+body[data-display="tv"] .quote-author,
+body[data-display="tv"] .calendar-event-meta {
+  font-size: 12px;
+}
+
+body[data-display="tv"] .weather-summary-title {
+  font-size: 18px;
+}
+
+body[data-display="tv"] .detail-value {
+  font-size: 21px;
+}
+
+body[data-display="tv"] .stock-price {
+  font-size: 26px;
+}
+
+body[data-display="tv"] .stock-change,
+body[data-display="tv"] .stock-extended,
+body[data-display="tv"] .stock-basis-change,
+body[data-display="tv"] .stock-basis-label {
+  font-size: 12px;
+}
+
+body[data-display="tv"] .quote-text {
+  font-size: 15px;
+  line-height: 1.22;
+}
+
+body[data-display="tv"] .telegram-item-text {
+  font-size: 14px;
+}
+
+body[data-display="tv"] .calendar-day-title {
+  font-size: 13px;
+}
+
+body[data-display="tv"] .calendar-day-date {
+  font-size: 12px;
+}
+
+body[data-display="tv"] .calendar-event-title {
+  font-size: 13px;
+}
+
+body[data-display="tv"] .calendar-empty-day {
+  font-size: 13px;
+}
+
+body[data-display="tv"][data-layout="daylight"] .dashboard {
+  grid-template-rows: minmax(0, 1.02fr) minmax(0, 0.82fr) minmax(0, 0.72fr);
+}
+
+body[data-display="tv"][data-layout="pastel"] .dashboard,
+body[data-display="tv"][data-layout="midnight"] .dashboard,
+body[data-display="tv"][data-layout="neon"] .dashboard {
+  grid-template-rows: minmax(0, 0.92fr) minmax(0, 0.84fr) minmax(0, 0.72fr);
+}
+
+/* Actual Fire TV WebView renders 1920x1080 as a lower CSS-pixel viewport.
+   These fixed values are tuned from device screencaps, not desktop guesses. */
+body[data-display="tv"] .app-shell {
+  gap: 8px;
+  padding: 14px 26px 18px;
+}
+
+body[data-display="tv"] .topbar {
+  flex-basis: 36px;
+  height: 36px;
+}
+
+body[data-display="tv"] .brand-block .eyebrow,
+body[data-display="tv"] .layout-copy .metric-label {
+  font-size: 9px;
+}
+
+body[data-display="tv"] .brand-block h1,
+body[data-display="tv"] .layout-copy strong {
+  font-size: 14px;
+}
+
+body[data-display="tv"] .layout-button {
+  min-width: 62px;
+  min-height: 32px;
+  padding: 0 12px;
+  font-size: 12px;
+}
+
+body[data-display="tv"] .dashboard {
+  gap: 8px;
+}
+
+body[data-display="tv"] .panel {
+  padding: 8px;
+}
+
+body[data-display="tv"] .panel-header {
+  margin-bottom: 5px;
+}
+
+body[data-display="tv"] .panel-header h2 {
+  font-size: 12px;
+  letter-spacing: 0.1em;
+}
+
+body[data-display="tv"] .panel-meta {
+  font-size: 9px;
+}
+
+body[data-display="tv"] .metric-label,
+body[data-display="tv"] .quote-kicker,
+body[data-display="tv"] .detail-label,
+body[data-display="tv"] .calendar-event-time {
+  font-size: 9px;
+}
+
+body[data-display="tv"] .metric-value {
+  font-size: 42px;
+}
+
+body[data-display="tv"] .metric-value--countdown {
+  font-size: 22px;
+}
+
+body[data-display="tv"] .metric-subvalue {
+  font-size: 11px;
+  margin-top: 3px;
+}
+
+body[data-display="tv"] .timezone-clocks {
+  gap: 4px;
+  margin-top: 5px;
+}
+
+body[data-display="tv"] .timezone-card {
+  padding: 4px 5px;
+}
+
+body[data-display="tv"] .timezone-label,
+body[data-display="tv"] .timezone-name {
+  font-size: 9px;
+}
+
+body[data-display="tv"] .timezone-time {
+  font-size: 16px;
+}
+
+body[data-display="tv"] .timezone-name {
+  display: none;
+}
+
+body[data-display="tv"] .weather-temp {
+  font-size: 44px;
+}
+
+body[data-display="tv"] .weather-glyph {
+  width: 36px;
+  height: 40px;
+}
+
+body[data-display="tv"] .weather-summary,
+body[data-display="tv"] .detail-subtitle,
+body[data-display="tv"] .quote-author,
+body[data-display="tv"] .calendar-event-meta {
+  font-size: 10px;
+}
+
+body[data-display="tv"] .weather-summary-title {
+  font-size: 14px;
+}
+
+body[data-display="tv"] .weather-highlight {
+  padding: 5px;
+}
+
+body[data-display="tv"] .moon-svg {
+  width: 30px;
+  height: 30px;
+}
+
+body[data-display="tv"] .weather-details {
+  gap: 4px;
+  margin-top: 5px;
+}
+
+body[data-display="tv"] .weather-details {
+  display: none;
+}
+
+body[data-display="tv"] .detail-card {
+  padding: 4px 5px;
+}
+
+body[data-display="tv"] .detail-value {
+  font-size: 15px;
+}
+
+body[data-display="tv"] .stock-card {
+  padding: 6px;
+}
+
+body[data-display="tv"] .stock-symbol {
+  font-size: 11px;
+}
+
+body[data-display="tv"] .stock-label {
+  font-size: 9px;
+}
+
+body[data-display="tv"] .stock-price {
+  font-size: 19px;
+}
+
+body[data-display="tv"] .stock-change,
+body[data-display="tv"] .stock-extended,
+body[data-display="tv"] .stock-basis-change,
+body[data-display="tv"] .stock-basis-label {
+  font-size: 10px;
+}
+
+body[data-display="tv"] .stock-basis {
+  display: none;
+}
+
+body[data-display="tv"] .quote-text {
+  font-size: 12px;
+  line-height: 1.18;
+}
+
+body[data-display="tv"] #bible-card {
+  display: none;
+}
+
+body[data-display="tv"] .telegram-item {
+  padding: 6px 7px;
+}
+
+body[data-display="tv"] .telegram-item-text {
+  font-size: 11px;
+}
+
+body[data-display="tv"] .calendar-source-pill {
+  font-size: 9px;
+  padding: 2px 6px;
+}
+
+body[data-display="tv"] .calendar-day-title,
+body[data-display="tv"] .calendar-empty-day,
+body[data-display="tv"] .calendar-event-title {
+  font-size: 10px;
+}
+
+body[data-display="tv"] .calendar-day-date {
+  font-size: 9px;
+}
+
+body[data-display="tv"] .calendar-agenda--workweek {
+  gap: 4px;
+}
+
+body[data-display="tv"] .calendar-agenda--workweek .calendar-day-group {
+  gap: 3px;
+}
+
+body[data-display="tv"] .calendar-event {
+  padding: 3px 5px;
+}
+
+body[data-display="tv"][data-layout="daylight"] .dashboard {
+  grid-template-rows: minmax(0, 0.85fr) minmax(0, 1fr) minmax(0, 0.7fr);
+}
+
+body[data-display="tv"][data-layout="daylight"] #panel-weather .weather-details {
+  display: none;
+}
+
+body[data-display="tv"][data-layout="daylight"] #panel-weather .weather-summary div:last-child {
+  display: none;
+}
+
+body[data-display="tv"][data-layout="midnight"] #panel-stocks .stocks-grid {
+  --stock-columns: 4;
+}
+
+body[data-display="tv"][data-layout="pastel"] #panel-stocks .stocks-grid,
+body[data-display="tv"][data-layout="paper"] #panel-stocks .stocks-grid,
+body[data-display="tv"][data-layout="neon"] #panel-stocks .stocks-grid {
+  --stock-columns: 1;
+}
+
+body[data-display="tv"][data-layout="pastel"] #panel-stocks .stock-card,
+body[data-display="tv"][data-layout="paper"] #panel-stocks .stock-card,
+body[data-display="tv"][data-layout="neon"] #panel-stocks .stock-card {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 6px;
+  min-height: 0;
+  padding: 4px 8px;
+}
+
+body[data-display="tv"][data-layout="pastel"] #panel-stocks .stock-card-core,
+body[data-display="tv"][data-layout="paper"] #panel-stocks .stock-card-core,
+body[data-display="tv"][data-layout="neon"] #panel-stocks .stock-card-core {
+  align-items: flex-end;
+  justify-content: center;
+  gap: 0;
+  padding: 0;
+}
+
+body[data-display="tv"][data-layout="pastel"] #panel-stocks .stock-card-top,
+body[data-display="tv"][data-layout="paper"] #panel-stocks .stock-card-top,
+body[data-display="tv"][data-layout="neon"] #panel-stocks .stock-card-top {
+  gap: 6px;
+}
+
+body[data-display="tv"][data-layout="pastel"] #panel-stocks .stock-badge,
+body[data-display="tv"][data-layout="paper"] #panel-stocks .stock-badge,
+body[data-display="tv"][data-layout="neon"] #panel-stocks .stock-badge {
+  width: 7px;
+  height: 7px;
+  box-shadow: 0 0 0 2px color-mix(in srgb, var(--brand, var(--hue)) 18%, transparent);
+}
+
+body[data-display="tv"][data-layout="pastel"] #panel-stocks .stock-label,
+body[data-display="tv"][data-layout="pastel"] #panel-stocks .stock-extended,
+body[data-display="tv"][data-layout="paper"] #panel-stocks .stock-label,
+body[data-display="tv"][data-layout="paper"] #panel-stocks .stock-extended,
+body[data-display="tv"][data-layout="neon"] #panel-stocks .stock-label,
+body[data-display="tv"][data-layout="neon"] #panel-stocks .stock-extended {
+  display: none;
+}
+
+body[data-display="tv"][data-layout="pastel"] #panel-stocks .stock-symbol,
+body[data-display="tv"][data-layout="paper"] #panel-stocks .stock-symbol,
+body[data-display="tv"][data-layout="neon"] #panel-stocks .stock-symbol {
+  font-size: 11px;
+  line-height: 1;
+}
+
+body[data-display="tv"][data-layout="pastel"] #panel-stocks .stock-price,
+body[data-display="tv"][data-layout="paper"] #panel-stocks .stock-price,
+body[data-display="tv"][data-layout="neon"] #panel-stocks .stock-price {
+  font-size: 15px;
+  line-height: 1;
+}
+
+body[data-display="tv"][data-layout="pastel"] #panel-stocks .stock-change,
+body[data-display="tv"][data-layout="paper"] #panel-stocks .stock-change,
+body[data-display="tv"][data-layout="neon"] #panel-stocks .stock-change {
+  display: none;
+}
+
+body[data-display="tv"][data-layout="paper"] .dashboard {
+  grid-template-rows: minmax(0, 0.82fr) minmax(0, 0.86fr) minmax(0, 0.74fr);
+}
+
+body[data-display="tv"][data-layout="paper"] #panel-time .time-grid {
+  grid-template-columns: 1fr;
+  gap: 2px;
+}
+
+body[data-display="tv"][data-layout="paper"] #panel-time .time-block--countdown,
+body[data-display="tv"][data-layout="paper"] #panel-time .timezone-clocks {
+  display: none;
+}
+
+body[data-display="tv"][data-layout="paper"] #panel-weather .weather-summary div:last-child {
+  display: none;
+}

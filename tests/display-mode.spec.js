@@ -34,3 +34,34 @@ test('display route enables tv mode and preserves panel fit', async ({ page }) =
   await expectAllNoClip(page, '.calendar-event-title');
   await expectAllNoClip(page, '.stock-price');
 });
+
+test('display route fits Fire TV CSS viewport', async ({ page }) => {
+  await page.addInitScript(() => {
+    window.localStorage.setItem('tv-info-layout-index', '0');
+  });
+  await page.setViewportSize({ width: 960, height: 540 });
+  await mockDashboardApis(page, { stress: true, premarket: true });
+  await page.goto('/display');
+
+  await expect(page.locator('.topbar')).toBeVisible();
+  await expect(page.locator('#panel-calendar')).toBeVisible();
+  await expect(page.locator('#panel-time')).toBeVisible();
+  await expect(page.locator('#panel-weather')).toBeVisible();
+
+  const layouts = ['daylight', 'midnight', 'pastel', 'paper', 'neon'];
+  for (const layout of layouts) {
+    await expect(page.locator('body')).toHaveAttribute('data-layout', layout);
+    await expectAllNoClip(page, '.calendar-event-title:visible');
+    await expectAllNoClip(page, '.stock-symbol:visible');
+    await expectAllNoClip(page, '.stock-price:visible');
+    await expectAllNoClip(page, '.metric-value:visible');
+
+    const geometry = await page.evaluate(() => ({
+      fitsViewport: document.documentElement.scrollWidth <= window.innerWidth + 2
+        && document.documentElement.scrollHeight <= window.innerHeight + 2,
+    }));
+
+    expect(geometry.fitsViewport, `${layout} fits viewport`).toBeTruthy();
+    await page.locator('#next-layout-button').click();
+  }
+});

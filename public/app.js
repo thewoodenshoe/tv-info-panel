@@ -9,9 +9,10 @@ const layoutName = document.querySelector('#layout-name');
 const nextLayoutButton = document.querySelector('#next-layout-button');
 const telegramList = document.querySelector('#telegram-list');
 const MAX_TELEGRAM_ITEMS = 6;
-const CALENDAR_EVENT_LIMIT_STANDARD = 8;
-const CALENDAR_EVENT_LIMIT_COMPACT = 6;
-const TELEGRAM_REFRESH_MS = 4 * 1000;
+const WORKWEEK_DAYS = 5;
+const CALENDAR_EVENTS_PER_DAY_STANDARD = 2;
+const CALENDAR_EVENTS_PER_DAY_COMPACT = 1;
+const TELEGRAM_REFRESH_MS = 2 * 1000;
 const DASHBOARD_REFRESH_MS = 5 * 60 * 1000;
 
 const LAYOUTS = [
@@ -58,6 +59,12 @@ function escapeHtml(value) {
     .replaceAll('>', '&gt;')
     .replaceAll('"', '&quot;')
     .replaceAll("'", '&#39;');
+}
+
+function truncateText(value, maxLength) {
+  const text = String(value ?? '').trim();
+  if (text.length <= maxLength) return text;
+  return `${text.slice(0, Math.max(0, maxLength - 3)).trimEnd()}...`;
 }
 
 function sanitizeColor(value, fallback = '#69b3ff') {
@@ -169,6 +176,49 @@ function formatDayKey(date, timeZone) {
   }).format(date);
 }
 
+function formatLocalDayKey(date) {
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, '0');
+  const day = String(date.getDate()).padStart(2, '0');
+  return `${year}-${month}-${day}`;
+}
+
+function formatLocalShortDate(date) {
+  return new Intl.DateTimeFormat([], {
+    month: 'short',
+    day: 'numeric',
+  }).format(date);
+}
+
+function getWorkweekDays(events = [], timeZone) {
+  const validEvents = events
+    .map((event) => new Date(event.start))
+    .filter((date) => !Number.isNaN(date.getTime()))
+    .sort((a, b) => a.getTime() - b.getTime());
+  const anchor = validEvents[0] || new Date();
+  const zonedAnchor = getZonedDate(anchor, timeZone);
+  zonedAnchor.setHours(0, 0, 0, 0);
+
+  const weekday = zonedAnchor.getDay();
+  const offsetToMonday = weekday === 0 ? 1 : weekday === 6 ? 2 : 1 - weekday;
+  const monday = new Date(zonedAnchor);
+  monday.setDate(zonedAnchor.getDate() + offsetToMonday);
+
+  const todayKey = formatDayKey(new Date(), timeZone);
+  return Array.from({ length: WORKWEEK_DAYS }, (_, index) => {
+    const date = new Date(monday);
+    date.setDate(monday.getDate() + index);
+    const key = formatLocalDayKey(date);
+    return {
+      key,
+      title: key === todayKey
+        ? 'Today'
+        : new Intl.DateTimeFormat([], { weekday: 'short' }).format(date),
+      subtitle: formatLocalShortDate(date),
+    };
+  });
+}
+
 function getCalendarDayHeader(date, timeZone) {
   const today = new Date();
   const tomorrow = new Date(today);
@@ -206,8 +256,13 @@ function formatCalendarTimeRange(event, timeZone) {
 
 function getCalendarEventLimit() {
   return document.body.dataset.density === 'compact'
-    ? CALENDAR_EVENT_LIMIT_COMPACT
-    : CALENDAR_EVENT_LIMIT_STANDARD;
+    ? CALENDAR_EVENTS_PER_DAY_COMPACT
+    : CALENDAR_EVENTS_PER_DAY_STANDARD;
+}
+
+function getCalendarTitleLimit() {
+  if (document.body.dataset.display === 'tv') return 42;
+  return document.body.dataset.density === 'compact' ? 48 : 64;
 }
 
 function renderMoonSvg(phaseValue = 0, label = 'Moon') {
@@ -462,7 +517,7 @@ function renderStocks(stocks) {
             ${sessionBadge}
           </header>
           <div class="stock-card-core">
-            <div class="stock-price">${formatMoney(quote.price)}</div>
+            <div class="stock-price ${state}">${formatMoney(quote.price)}</div>
             <div class="stock-change ${state}">
               <span class="stock-arrow">${arrow}</span>
               <span class="stock-change-value">${formatSigned(quote.dayChange)}</span>
@@ -539,6 +594,8 @@ function renderTelegramPanel(telegram) {
 function renderCalendars(calendarPanel) {
   calendarData = calendarPanel;
   const calendars = dashboardConfig?.calendars || [];
+  const events = Array.isArray(calendarPanel?.events) ? calendarPanel.events : [];
+  const timeZone = dashboardConfig?.timezone || 'America/New_York';
 
   calendarSources.innerHTML = calendars
     .map((calendar) => `
@@ -552,60 +609,60 @@ function renderCalendars(calendarPanel) {
   showStatus('#calendar-status', calendarPanel?.status || '');
   setPanelMeta('#calendar-meta', calendarPanel?.metaLabel || (calendars.length ? 'Agenda' : 'No calendars configured'));
 
-  if (!calendarPanel?.events?.length) {
-    calendarAgenda.innerHTML = `
-      <div class="calendar-empty">
-        <p>No upcoming events to show yet.</p>
-        <p>Add live iCal feeds or keep a few fallback events in the local config.</p>
-      </div>
-    `;
-    return;
-  }
+  calendarAgenda.classList.add('calendar-agenda--workweek');
 
-  const visibleEvents = calendarPanel.events.slice(0, getCalendarEventLimit());
-  const overflowCount = Math.max(0, calendarPanel.events.length - visibleEvents.length);
-  const groups = [];
-  const timeZone = dashboardConfig?.timezone || 'America/New_York';
+  const workweekDays = getWorkweekDays(events, timeZone);
+  const workweekKeys = new Set(workweekDays.map((day) => day.key));
+  const eventsByDay = new Map(workweekDays.map((day) => [day.key, []]));
+  const eventsPerDayLimit = getCalendarEventLimit();
 
-  for (const event of visibleEvents) {
+  for (const event of events) {
     const start = new Date(event.start);
+    if (Number.isNaN(start.getTime())) continue;
     const dayKey = formatDayKey(start, timeZone);
-    let group = groups.at(-1);
-    if (!group || group.key !== dayKey) {
-      group = {
-        key: dayKey,
-        header: getCalendarDayHeader(start, timeZone),
-        events: [],
-      };
-      groups.push(group);
+    if (!workweekKeys.has(dayKey)) continue;
+    if (!eventsByDay.has(dayKey)) {
+      eventsByDay.set(dayKey, []);
     }
-    group.events.push(event);
+    eventsByDay.get(dayKey).push(event);
   }
 
-  calendarAgenda.innerHTML = groups
-    .map((group) => `
+  let overflowCount = events.filter((event) => {
+    const start = new Date(event.start);
+    return !Number.isNaN(start.getTime()) && !workweekKeys.has(formatDayKey(start, timeZone));
+  }).length;
+
+  calendarAgenda.innerHTML = workweekDays
+    .map((day) => {
+      const dayEvents = (eventsByDay.get(day.key) || [])
+        .sort((a, b) => new Date(a.start).getTime() - new Date(b.start).getTime());
+      const visibleDayEvents = dayEvents.slice(0, eventsPerDayLimit);
+      overflowCount += Math.max(0, dayEvents.length - visibleDayEvents.length);
+
+      return `
       <section class="calendar-day-group">
         <header class="calendar-day-header">
-          <div class="calendar-day-title">${escapeHtml(group.header.title)}</div>
-          <div class="calendar-day-date">${escapeHtml(group.header.subtitle)}</div>
+          <div class="calendar-day-title">${escapeHtml(day.title)}</div>
+          <div class="calendar-day-date">${escapeHtml(day.subtitle)}</div>
         </header>
         <div class="calendar-events">
-          ${group.events.map((event) => `
+          ${visibleDayEvents.length ? visibleDayEvents.map((event) => `
             <article class="calendar-event">
               <span class="calendar-event-accent" style="background:${sanitizeColor(event.color, '#94a3b8')}"></span>
               <div class="calendar-event-main">
                 <div class="calendar-event-time">${escapeHtml(formatCalendarTimeRange(event, timeZone))}</div>
-                <div class="calendar-event-title">${escapeHtml(event.title)}</div>
+                <div class="calendar-event-title" title="${escapeHtml(event.title)}">${escapeHtml(truncateText(event.title, getCalendarTitleLimit()))}</div>
                 <div class="calendar-event-meta">
                   <span class="calendar-event-source">${escapeHtml(event.calendarLabel || 'Calendar')}</span>
                   ${event.location ? `<span class="calendar-event-location">${escapeHtml(event.location)}</span>` : ''}
                 </div>
               </div>
             </article>
-          `).join('')}
+          `).join('') : '<div class="calendar-empty-day">Open</div>'}
         </div>
       </section>
-    `)
+    `;
+    })
     .join('') + (
       overflowCount
         ? `<div class="calendar-overflow-notice">+${overflowCount} more upcoming event${overflowCount === 1 ? '' : 's'}</div>`

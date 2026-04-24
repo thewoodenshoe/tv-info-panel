@@ -98,12 +98,15 @@ class MainActivity : AppCompatActivity() {
         domStorageEnabled = true
         loadsImagesAutomatically = true
         mediaPlaybackRequiresUserGesture = false
-        loadWithOverviewMode = true
+        textZoom = 100
+        loadWithOverviewMode = false
         useWideViewPort = true
         cacheMode = WebSettings.LOAD_DEFAULT
         builtInZoomControls = false
         displayZoomControls = false
       }
+
+      setInitialScale(100)
 
       webChromeClient = WebChromeClient()
       webViewClient = object : WebViewClient() {
