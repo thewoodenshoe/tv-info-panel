@@ -39,7 +39,7 @@ for (const viewport of viewports) {
         '#clock', '#date', '#workday-countdown', '.timezone-card',
         '.weather-temp', '.weather-summary-title', '.weather-highlight', '.detail-card',
         '.stock-symbol', '.stock-label', '.stock-price', '.stock-change',
-        '.quote-card', '.bible-card', '.calendar-source-pill', '.calendar-event',
+        '.quote-card', '.bible-card', '.telegram-bullet', '.calendar-source-pill', '.calendar-event',
       ];
       for (const selector of mustExist) {
         await expect(page.locator(selector).first()).toBeVisible();
@@ -64,6 +64,9 @@ for (const viewport of viewports) {
       } else {
         await expect(telegramEmpty).toBeVisible();
       }
+      await expect(page.locator('#panel-telegram')).not.toContainText('Bot token');
+      await expect(page.locator('#panel-telegram')).not.toContainText('/add');
+      await expect(page.locator('#panel-telegram')).not.toContainText('/remove');
 
       await saveShot(page, `${viewport.name}-${layout}`);
     });

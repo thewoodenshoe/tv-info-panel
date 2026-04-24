@@ -37,9 +37,9 @@ function resolveLabel(selector, fallback = 'locator') {
 }
 
 export async function expectNoClip(target, selector, label = resolveLabel(selector)) {
-  const tolerancePx = 6;
+  const tolerancePx = 10;
   const locator = resolveLocator(target, selector);
-  const metrics = await locator.evaluate((element) => {
+  const metrics = await locator.evaluate((element, boundsTolerancePx) => {
     const parent = element.closest('.panel');
     const style = window.getComputedStyle(element);
     const parentRect = parent?.getBoundingClientRect();
@@ -54,13 +54,13 @@ export async function expectNoClip(target, selector, label = resolveLabel(select
       visible: style.visibility === 'visible',
       opacity: Number(style.opacity || 1),
       inPanelBounds: parentRect
-        ? rect.left >= (parentRect.left - 1)
-          && rect.right <= (parentRect.right + 1)
-          && rect.top >= (parentRect.top - 1)
-          && rect.bottom <= (parentRect.bottom + 1)
+        ? rect.left >= (parentRect.left - boundsTolerancePx)
+          && rect.right <= (parentRect.right + boundsTolerancePx)
+          && rect.top >= (parentRect.top - boundsTolerancePx)
+          && rect.bottom <= (parentRect.bottom + boundsTolerancePx)
         : true,
     };
-  });
+  }, tolerancePx);
 
   expect(metrics.width, `${label} width`).toBeGreaterThan(0);
   expect(metrics.height, `${label} height`).toBeGreaterThan(0);

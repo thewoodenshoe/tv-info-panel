@@ -14,7 +14,8 @@ const visibleSelectors = [
   '.stock-extended-label',
   '.quote-kicker',
   '.quote-author',
-  '.telegram-overflow-notice',
+  '.telegram-bullet',
+  '.telegram-item-text',
   '.calendar-source-pill',
 ];
 
@@ -34,10 +35,14 @@ for (const layout of layouts) {
       await expect(page.locator(selector).first()).toBeVisible();
     }
 
-    await expect(page.locator('.telegram-item')).toHaveCount(3);
+    await expect(page.locator('.telegram-item')).toHaveCount(6);
     await expect(page.locator('.telegram-item').first()).toBeVisible();
-    await expect(page.locator('.telegram-overflow-notice')).toBeVisible();
+    await expect(page.locator('.telegram-overflow-notice')).toBeHidden();
     await expect(page.locator('.stock-extended-label').first()).toHaveText('After hours');
+    await expect(page.locator('#panel-telegram')).not.toContainText('Bot token');
+    await expect(page.locator('#panel-telegram')).not.toContainText('/add');
+    await expect(page.locator('#panel-telegram')).not.toContainText('/remove');
+    await expect(page.locator('#panel-telegram')).not.toContainText('Telegram Board');
 
     const telegramHtml = await page.locator('.telegram-item-text').first().innerHTML();
     expect(telegramHtml).toContain('&lt;strong&gt;');

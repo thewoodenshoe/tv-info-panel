@@ -8,16 +8,18 @@ const calendarSources = document.querySelector('#calendar-sources');
 const layoutName = document.querySelector('#layout-name');
 const nextLayoutButton = document.querySelector('#next-layout-button');
 const telegramList = document.querySelector('#telegram-list');
-const MAX_TELEGRAM_ITEMS = 3;
+const MAX_TELEGRAM_ITEMS = 6;
 const CALENDAR_EVENT_LIMIT_STANDARD = 8;
 const CALENDAR_EVENT_LIMIT_COMPACT = 6;
+const TELEGRAM_REFRESH_MS = 4 * 1000;
+const DASHBOARD_REFRESH_MS = 5 * 60 * 1000;
 
 const LAYOUTS = [
-  { id: 'daylight', label: 'Daylight Board' },
-  { id: 'midnight', label: 'Midnight Desk' },
-  { id: 'pastel', label: 'Pastel Poster' },
-  { id: 'paper', label: 'Slate & Paper' },
-  { id: 'neon', label: 'Neon Blueprint' },
+  { id: 'daylight', label: 'Home View' },
+  { id: 'midnight', label: 'Market Map' },
+  { id: 'pastel', label: 'Coastal Outlook' },
+  { id: 'paper', label: 'Agenda Wall' },
+  { id: 'neon', label: 'Night Operations' },
 ];
 
 const STOCK_BRAND_COLORS = {
@@ -80,6 +82,10 @@ function syncDisplayMode() {
     ? 'compact'
     : 'standard';
 
+  if (isTvDisplayRequested()) {
+    window.setTimeout(() => nextLayoutButton.focus({ preventScroll: true }), 0);
+  }
+
   if (calendarData) {
     renderCalendars(calendarData);
   }
@@ -89,8 +95,10 @@ function applyLayout(index) {
   activeLayoutIndex = index % LAYOUTS.length;
   const layout = LAYOUTS[activeLayoutIndex];
   document.body.dataset.layout = layout.id;
+  document.body.dataset.layoutIndex = String(activeLayoutIndex + 1);
   layoutName.textContent = layout.label;
-  nextLayoutButton.textContent = `Next layout`;
+  nextLayoutButton.textContent = 'Next';
+  nextLayoutButton.setAttribute('aria-label', `Show next layout. Current layout: ${layout.label}`);
   window.localStorage.setItem('tv-info-layout-index', String(activeLayoutIndex));
 }
 
@@ -276,17 +284,53 @@ function formatUv(value) {
   return value == null ? '--' : Number(value).toFixed(1);
 }
 
+function getWeatherIcon(summary = '') {
+  const normalized = summary.toLowerCase();
+  if (normalized.includes('thunder')) return 'storm';
+  if (normalized.includes('snow')) return 'snow';
+  if (normalized.includes('rain') || normalized.includes('shower') || normalized.includes('drizzle')) return 'rain';
+  if (normalized.includes('fog')) return 'fog';
+  if (normalized.includes('cloud')) return 'cloud';
+  return 'sun';
+}
+
+function renderWeatherGlyph(type) {
+  const cloud = '<path d="M28 66h42a16 16 0 0 0 1.5-31.9A24 24 0 0 0 25.8 42 12.5 12.5 0 0 0 28 66Z"/>';
+  const sun = '<circle cx="50" cy="50" r="17"/><path d="M50 16v10M50 74v10M16 50h10M74 50h10M25.9 25.9l7.1 7.1M67 67l7.1 7.1M74.1 25.9 67 33M33 67l-7.1 7.1"/>';
+  const rain = `${cloud}<path d="M35 76l-5 10M51 76l-5 10M67 76l-5 10"/>`;
+  const storm = `${cloud}<path d="M51 72 42 91h13l-6 15 19-26H56l7-8H51Z"/>`;
+  const fog = `${cloud}<path d="M26 78h48M34 90h32"/>`;
+  const snow = `${cloud}<path d="M34 80h0M50 84h0M66 80h0" stroke-linecap="round" stroke-width="6"/>`;
+  const paths = { sun, cloud, rain, storm, fog, snow };
+
+  return `
+    <svg class="weather-glyph weather-glyph--${type}" viewBox="0 0 100 110" role="img" aria-label="${type} weather">
+      <g fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="6">
+        ${paths[type] || sun}
+      </g>
+    </svg>
+  `;
+}
+
 function renderWeather(weather) {
   const currentNode = document.querySelector('#weather-current');
   const detailsNode = document.querySelector('#weather-details');
   const hoursNode = document.querySelector('#weather-hours');
+  const summary = weather.current?.summary || 'Weather';
+  const glyph = getWeatherIcon(summary);
 
   currentNode.innerHTML = `
-    <div class="weather-temp-block">
-      <div class="weather-temp">${formatDegrees(weather.current?.temperature_2m)}</div>
+    <div class="weather-hero">
+      <div class="weather-temp-block">
+        ${renderWeatherGlyph(glyph)}
+        <div>
+          <div class="weather-temp">${formatDegrees(weather.current?.temperature_2m)}</div>
+          <div class="weather-feels">Feels ${formatDegrees(weather.current?.apparent_temperature)}</div>
+        </div>
+      </div>
       <div class="weather-summary">
         <div class="weather-summary-title">${escapeHtml(weather.label)}</div>
-        <div>${escapeHtml(weather.current?.summary || 'Weather')} · Feels like ${formatDegrees(weather.current?.apparent_temperature)}</div>
+        <div>${escapeHtml(summary)}</div>
         <div>Wind ${formatWind(weather.current?.wind_speed_10m)}</div>
       </div>
     </div>
@@ -463,14 +507,13 @@ function renderInspiration(inspiration) {
 }
 
 function renderTelegramPanel(telegram) {
-  showStatus('#telegram-status', telegram.status || '');
-  setPanelMeta('#telegram-meta', telegram.metaLabel || 'Telegram');
+  showStatus('#telegram-status', '');
+  setPanelMeta('#telegram-meta', telegram.fetchedAt ? formatTime(new Date(telegram.fetchedAt), dashboardConfig?.timezone || 'America/New_York') : 'Live');
 
   if (!telegram.items?.length) {
     telegramList.innerHTML = `
       <div class="telegram-empty">
-        <p>No Telegram items yet.</p>
-        <p>Send <code>/add your text</code> to the bot and it will show up here.</p>
+        <p>No reminders.</p>
       </div>
     `;
     return;
@@ -481,10 +524,9 @@ function renderTelegramPanel(telegram) {
 
   telegramList.innerHTML = visibleItems
     .map((item) => `
-      <article class="telegram-item">
-        <div class="telegram-item-id">#${item.id}</div>
+      <article class="telegram-item" data-id="${item.id}">
+        <div class="telegram-bullet" aria-hidden="true"></div>
         <div class="telegram-item-text">${escapeHtml(item.text)}</div>
-        <div class="telegram-item-meta">${escapeHtml(item.sourceLabel || 'Telegram')} · ${escapeHtml(item.createdAtLabel || '')}</div>
       </article>
     `)
     .join('') + (
@@ -601,8 +643,28 @@ async function loadDashboard() {
   }
 }
 
-nextLayoutButton.addEventListener('click', () => {
+async function loadTelegramPanel() {
+  try {
+    renderTelegramPanel(await fetchJson('/api/telegram-panel'));
+  } catch {
+    setPanelMeta('#telegram-meta', 'Offline');
+  }
+}
+
+function showNextLayout() {
   applyLayout((activeLayoutIndex + 1) % LAYOUTS.length);
+  nextLayoutButton.focus({ preventScroll: true });
+}
+
+nextLayoutButton.addEventListener('click', showNextLayout);
+
+window.showNextDashboardLayout = showNextLayout;
+
+document.addEventListener('keydown', (event) => {
+  if (!isTvDisplayRequested()) return;
+  if (!['Enter', ' ', 'ArrowRight', 'ArrowDown', 'PageDown', 'MediaTrackNext'].includes(event.key)) return;
+  event.preventDefault();
+  showNextLayout();
 });
 
 applyLayout(activeLayoutIndex);
@@ -611,4 +673,5 @@ loadDashboard();
 window.addEventListener('resize', syncDisplayMode);
 window.visualViewport?.addEventListener('resize', syncDisplayMode);
 window.setInterval(updateTimePanel, 1000);
-window.setInterval(loadDashboard, 5 * 60 * 1000);
+window.setInterval(loadTelegramPanel, TELEGRAM_REFRESH_MS);
+window.setInterval(loadDashboard, DASHBOARD_REFRESH_MS);

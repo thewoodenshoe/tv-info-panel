@@ -14,7 +14,7 @@ export default defineConfig({
     viewport: { width: 1920, height: 1080 },
   },
   webServer: {
-    command: 'PORT=3031 npm run dev',
+    command: 'TELEGRAM_BOT_TOKEN= TELEGRAM_ALLOWED_CHAT_IDS= PORT=3031 npm start',
     url: 'http://127.0.0.1:3031',
     reuseExistingServer: true,
     timeout: 120000,

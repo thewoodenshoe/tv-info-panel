@@ -21,6 +21,16 @@ import com.paulstewart.tvinfopanel.firetv.databinding.ActivityMainBinding
 
 class MainActivity : AppCompatActivity() {
   private lateinit var binding: ActivityMainBinding
+  private val layoutAdvanceKeys = setOf(
+    KeyEvent.KEYCODE_DPAD_CENTER,
+    KeyEvent.KEYCODE_ENTER,
+    KeyEvent.KEYCODE_SPACE,
+    KeyEvent.KEYCODE_DPAD_RIGHT,
+    KeyEvent.KEYCODE_DPAD_DOWN,
+    KeyEvent.KEYCODE_PAGE_DOWN,
+    KeyEvent.KEYCODE_MEDIA_NEXT,
+    KeyEvent.KEYCODE_BUTTON_A,
+  )
 
   override fun onCreate(savedInstanceState: Bundle?) {
     super.onCreate(savedInstanceState)
@@ -65,6 +75,10 @@ class MainActivity : AppCompatActivity() {
   }
 
   override fun onKeyDown(keyCode: Int, event: KeyEvent?): Boolean {
+    if (layoutAdvanceKeys.contains(keyCode)) {
+      advanceDashboardLayout()
+      return true
+    }
     if (keyCode == KeyEvent.KEYCODE_MENU) {
       hideSystemBars()
     }
@@ -109,6 +123,7 @@ class MainActivity : AppCompatActivity() {
         override fun onPageCommitVisible(view: WebView, url: String?) {
           hideError()
           hideSystemBars()
+          view.requestFocus()
         }
 
         override fun onReceivedError(
@@ -132,6 +147,15 @@ class MainActivity : AppCompatActivity() {
     }
 
     binding.webView.loadUrl(url)
+  }
+
+  private fun advanceDashboardLayout() {
+    hideSystemBars()
+    binding.webView.requestFocus()
+    binding.webView.evaluateJavascript(
+      "window.showNextDashboardLayout && window.showNextDashboardLayout();",
+      null,
+    )
   }
 
   private fun showError(message: String) {

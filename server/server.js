@@ -789,10 +789,9 @@ function normalizeTelegramItems(items, timeZone) {
 async function getTelegramPanelData(config) {
   const state = await ensureTelegramState();
   return {
-    metaLabel: TELEGRAM_BOT_TOKEN ? 'Live bot connected' : 'Bot token not configured',
-    status: TELEGRAM_BOT_TOKEN
-      ? 'Send /add your text or /remove id to the bot.'
-      : 'Telegram bot token is not configured yet on this environment.',
+    fetchedAt: new Date().toISOString(),
+    metaLabel: 'Live',
+    status: '',
     items: normalizeTelegramItems(state.items, config.timezone || 'America/New_York'),
   };
 }
@@ -852,7 +851,7 @@ async function handleTelegramCommand(update) {
   const message = update.message || update.edited_message;
   const chatId = message?.chat?.id;
   const text = message?.text?.trim() || '';
-  if (!chatId || !text.startsWith('/')) return;
+  if (!chatId || !text) return;
 
   if (!canAccessChat(chatId)) {
     await sendTelegramMessage(chatId, 'This chat is not allowed to manage the TV board.');
@@ -901,6 +900,13 @@ async function handleTelegramCommand(update) {
     }
     const lines = state.items.map((item) => `#${item.id} ${item.text}`);
     await sendTelegramMessage(chatId, lines.join('\n'));
+    return;
+  }
+
+  if (!text.startsWith('/')) {
+    const sourceLabel = message.from?.first_name || message.chat?.title || 'Telegram';
+    const item = await addTelegramItem(text, sourceLabel);
+    await sendTelegramMessage(chatId, `Added #${item.id}.`);
   }
 }
 
@@ -936,7 +942,7 @@ function startTelegramPolling() {
     } catch (error) {
       console.error('[telegram-panel] error:', error?.message, '| cause:', error?.cause, '| stack:', error?.stack?.split('\n').slice(0, 4).join(' | '));
     } finally {
-      telegramPollTimer = setTimeout(tick, 15000);
+      telegramPollTimer = setTimeout(tick, 3000);
     }
   };
 
@@ -1026,7 +1032,9 @@ app.get('/api/system', async (_request, response) => {
   }
 });
 
-app.listen(PORT, () => {
+const server = app.listen(PORT, () => {
   console.log(`TV info panel running at http://localhost:${PORT}`);
   startTelegramPolling();
 });
+
+server.keepAliveTimeout = 65_000;
