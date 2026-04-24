@@ -11,16 +11,17 @@ const telegramList = document.querySelector('#telegram-list');
 const MAX_TELEGRAM_ITEMS = 6;
 const WORKWEEK_DAYS = 5;
 const CALENDAR_EVENTS_PER_DAY_STANDARD = 2;
-const CALENDAR_EVENTS_PER_DAY_COMPACT = 1;
+const CALENDAR_EVENTS_PER_DAY_COMPACT = 2;
+const CALENDAR_EVENTS_PER_DAY_TV = 1;
 const TELEGRAM_REFRESH_MS = 2 * 1000;
+const STOCKS_REFRESH_MS = 60 * 1000;
 const DASHBOARD_REFRESH_MS = 5 * 60 * 1000;
 
 const LAYOUTS = [
-  { id: 'daylight', label: 'Home View' },
   { id: 'midnight', label: 'Market Map' },
   { id: 'pastel', label: 'Coastal Outlook' },
-  { id: 'paper', label: 'Agenda Wall' },
   { id: 'neon', label: 'Night Operations' },
+  { id: 'retro', label: 'Retro Console' },
 ];
 
 const STOCK_BRAND_COLORS = {
@@ -190,12 +191,8 @@ function formatLocalShortDate(date) {
   }).format(date);
 }
 
-function getWorkweekDays(events = [], timeZone) {
-  const validEvents = events
-    .map((event) => new Date(event.start))
-    .filter((date) => !Number.isNaN(date.getTime()))
-    .sort((a, b) => a.getTime() - b.getTime());
-  const anchor = validEvents[0] || new Date();
+function getWorkweekDays(_events = [], timeZone) {
+  const anchor = new Date();
   const zonedAnchor = getZonedDate(anchor, timeZone);
   zonedAnchor.setHours(0, 0, 0, 0);
 
@@ -255,6 +252,7 @@ function formatCalendarTimeRange(event, timeZone) {
 }
 
 function getCalendarEventLimit() {
+  if (document.body.dataset.display === 'tv') return CALENDAR_EVENTS_PER_DAY_TV;
   return document.body.dataset.density === 'compact'
     ? CALENDAR_EVENTS_PER_DAY_COMPACT
     : CALENDAR_EVENTS_PER_DAY_STANDARD;
@@ -263,6 +261,12 @@ function getCalendarEventLimit() {
 function getCalendarTitleLimit() {
   if (document.body.dataset.display === 'tv') return 42;
   return document.body.dataset.density === 'compact' ? 48 : 64;
+}
+
+function getCalendarDisplayTitle(event) {
+  const title = event.title || 'Untitled event';
+  if (document.body.dataset.display !== 'tv' || !event.calendarLabel) return title;
+  return `${event.calendarLabel}: ${title}`;
 }
 
 function renderMoonSvg(phaseValue = 0, label = 'Moon') {
@@ -373,6 +377,7 @@ function renderWeather(weather) {
   const hoursNode = document.querySelector('#weather-hours');
   const summary = weather.current?.summary || 'Weather';
   const glyph = getWeatherIcon(summary);
+  const currentUv = weather.current?.uv_index ?? weather.uv?.current;
 
   currentNode.innerHTML = `
     <div class="weather-hero">
@@ -386,7 +391,7 @@ function renderWeather(weather) {
       <div class="weather-summary">
         <div class="weather-summary-title">${escapeHtml(weather.label)}</div>
         <div>${escapeHtml(summary)}</div>
-        <div>Wind ${formatWind(weather.current?.wind_speed_10m)}</div>
+        <div>Wind ${formatWind(weather.current?.wind_speed_10m)} · UV ${formatUv(currentUv)}</div>
       </div>
     </div>
     <div class="weather-highlight">
@@ -646,19 +651,22 @@ function renderCalendars(calendarPanel) {
           <div class="calendar-day-date">${escapeHtml(day.subtitle)}</div>
         </header>
         <div class="calendar-events">
-          ${visibleDayEvents.length ? visibleDayEvents.map((event) => `
+          ${visibleDayEvents.length ? visibleDayEvents.map((event) => {
+            const eventTitle = getCalendarDisplayTitle(event);
+            return `
             <article class="calendar-event">
               <span class="calendar-event-accent" style="background:${sanitizeColor(event.color, '#94a3b8')}"></span>
               <div class="calendar-event-main">
                 <div class="calendar-event-time">${escapeHtml(formatCalendarTimeRange(event, timeZone))}</div>
-                <div class="calendar-event-title" title="${escapeHtml(event.title)}">${escapeHtml(truncateText(event.title, getCalendarTitleLimit()))}</div>
+                <div class="calendar-event-title" title="${escapeHtml(eventTitle)}">${escapeHtml(truncateText(eventTitle, getCalendarTitleLimit()))}</div>
                 <div class="calendar-event-meta">
                   <span class="calendar-event-source">${escapeHtml(event.calendarLabel || 'Calendar')}</span>
                   ${event.location ? `<span class="calendar-event-location">${escapeHtml(event.location)}</span>` : ''}
                 </div>
               </div>
             </article>
-          `).join('') : '<div class="calendar-empty-day">Open</div>'}
+          `;
+          }).join('') : '<div class="calendar-empty-day">Open</div>'}
         </div>
       </section>
     `;
@@ -708,6 +716,14 @@ async function loadTelegramPanel() {
   }
 }
 
+async function loadStocksPanel() {
+  try {
+    renderStocks(await fetchJson('/api/stocks'));
+  } catch {
+    setPanelMeta('#stocks-meta', 'Offline');
+  }
+}
+
 function showNextLayout() {
   applyLayout((activeLayoutIndex + 1) % LAYOUTS.length);
   nextLayoutButton.focus({ preventScroll: true });
@@ -731,4 +747,5 @@ window.addEventListener('resize', syncDisplayMode);
 window.visualViewport?.addEventListener('resize', syncDisplayMode);
 window.setInterval(updateTimePanel, 1000);
 window.setInterval(loadTelegramPanel, TELEGRAM_REFRESH_MS);
+window.setInterval(loadStocksPanel, STOCKS_REFRESH_MS);
 window.setInterval(loadDashboard, DASHBOARD_REFRESH_MS);

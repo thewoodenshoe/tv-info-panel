@@ -21,7 +21,7 @@ test('display route enables tv mode and preserves panel fit', async ({ page }) =
   expect(displayMode.display).toBe('tv');
   expect(displayMode.density).toBe('compact');
 
-  await expect(page.locator('body')).toHaveAttribute('data-layout', 'daylight');
+  await expect(page.locator('body')).toHaveAttribute('data-layout', 'midnight');
   await page.evaluate(() => {
     document.dispatchEvent(new KeyboardEvent('keydown', {
       key: 'ArrowRight',
@@ -29,7 +29,7 @@ test('display route enables tv mode and preserves panel fit', async ({ page }) =
       cancelable: true,
     }));
   });
-  await expect(page.locator('body')).toHaveAttribute('data-layout', 'midnight');
+  await expect(page.locator('body')).toHaveAttribute('data-layout', 'pastel');
 
   await expectAllNoClip(page, '.calendar-event-title');
   await expectAllNoClip(page, '.stock-price');
@@ -48,7 +48,7 @@ test('display route fits Fire TV CSS viewport', async ({ page }) => {
   await expect(page.locator('#panel-time')).toBeVisible();
   await expect(page.locator('#panel-weather')).toBeVisible();
 
-  const layouts = ['daylight', 'midnight', 'pastel', 'paper', 'neon'];
+  const layouts = ['midnight', 'pastel', 'neon', 'retro'];
   for (const layout of layouts) {
     await expect(page.locator('body')).toHaveAttribute('data-layout', layout);
     await expectAllNoClip(page, '.calendar-event-title:visible');

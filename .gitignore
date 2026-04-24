@@ -1,3 +1,10 @@
 node_modules/
 .env
 .DS_Store
+data/*.local.json
+fire-tv-wrapper/.gradle/
+fire-tv-wrapper/build/
+fire-tv-wrapper/app/build/
+fire-tv-wrapper/local.properties
+fire-tv-wrapper/dashboard.local.properties
+test-results/

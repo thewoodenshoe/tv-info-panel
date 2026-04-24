@@ -6,7 +6,7 @@ import { test, expect } from '@playwright/test';
 import { mockDashboardApis } from './fixtures/api.js';
 import { expectNoClip } from './helpers/assertions.js';
 
-const layouts = ['daylight', 'midnight', 'pastel', 'paper', 'neon'];
+const layouts = ['midnight', 'pastel', 'neon', 'retro'];
 const viewports = [
   { name: 'tv-1080p', width: 1920, height: 1080 },
   { name: 'tv-768p', width: 1366, height: 768 },
@@ -27,7 +27,7 @@ for (const viewport of viewports) {
       await page.goto('/');
 
       await page.evaluate((layoutName) => {
-        localStorage.setItem('tv-info-layout-index', String(['daylight', 'midnight', 'pastel', 'paper', 'neon'].indexOf(layoutName)));
+        localStorage.setItem('tv-info-layout-index', String(['midnight', 'pastel', 'neon', 'retro'].indexOf(layoutName)));
       }, layout);
       await page.reload();
 

@@ -18,9 +18,11 @@ const defaultTelegramStorePath = path.join(rootDir, 'data', 'telegram-panel.loca
 const legacyTelegramStorePath = path.join(rootDir, 'data', 'telegram-panel.json');
 
 const PORT = Number.parseInt(process.env.PORT || '3030', 10);
-const TELEGRAM_POLL_INTERVAL_MS = 2000;
-const TELEGRAM_FETCH_TIMEOUT_MS = 3500;
+const TELEGRAM_POLL_INTERVAL_MS = 250;
+const TELEGRAM_LONG_POLL_TIMEOUT_SECONDS = 10;
+const TELEGRAM_FETCH_TIMEOUT_MS = 12_000;
 const TELEGRAM_BOT_TOKEN = process.env.TELEGRAM_BOT_TOKEN?.trim() || '';
+const TELEGRAM_POLLING_ENABLED = process.env.TELEGRAM_POLLING_ENABLED !== 'false';
 const TELEGRAM_ALLOWED_CHAT_IDS = new Set(
   (process.env.TELEGRAM_ALLOWED_CHAT_IDS || '')
     .split(',')
@@ -84,12 +86,13 @@ const DAILY_BIBLE_QUOTES = [
 ];
 
 const CALENDAR_CACHE_TTL_MS = 5 * 60 * 1000;
+const CALENDAR_LOOKBACK_DAYS = 7;
 const CALENDAR_LOOKAHEAD_DAYS = 7;
-const CALENDAR_MAX_EVENTS = 18;
+const CALENDAR_MAX_EVENTS = 60;
 
 let telegramState = null;
 let telegramPollStarted = false;
-let telegramPollTimer = null;
+let telegramPollInFlight = false;
 let calendarCache = {
   key: '',
   expiresAt: 0,
@@ -289,7 +292,7 @@ async function getCalendarPanelData(config) {
   }
 
   const now = new Date();
-  const from = new Date(now.getTime() - (6 * 60 * 60 * 1000));
+  const from = new Date(now.getTime() - (CALENDAR_LOOKBACK_DAYS * 24 * 60 * 60 * 1000));
   const to = new Date(now.getTime() + (CALENDAR_LOOKAHEAD_DAYS * 24 * 60 * 60 * 1000));
   const feedCalendars = (config.calendars || []).filter((calendar) => typeof calendar?.icsUrl === 'string' && calendar.icsUrl.trim());
   const results = await Promise.allSettled(feedCalendars.map((calendar) => fetchCalendarFeedEvents(calendar, from, to)));
@@ -338,7 +341,7 @@ async function getCalendarPanelData(config) {
 
   const value = {
     fetchedAt: now.toISOString(),
-    metaLabel: events.length > 0 ? `Next ${CALENDAR_LOOKAHEAD_DAYS} days` : 'Agenda',
+    metaLabel: events.length > 0 ? 'This workweek' : 'Agenda',
     status,
     mode,
     events,
@@ -817,6 +820,10 @@ function getTelegramApiUrl(method) {
   return `https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/${method}`;
 }
 
+function delay(ms) {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
 async function sendTelegramMessage(chatId, text) {
   if (!TELEGRAM_BOT_TOKEN) return;
   await fetch(getTelegramApiUrl('sendMessage'), {
@@ -914,44 +921,58 @@ async function handleTelegramCommand(update) {
 
 async function pollTelegramOnce() {
   if (!TELEGRAM_BOT_TOKEN) return;
-  const state = await ensureTelegramState();
-  const url = new URL(getTelegramApiUrl('getUpdates'));
-  url.searchParams.set('timeout', '0');
-  url.searchParams.set('allowed_updates', JSON.stringify(['message', 'edited_message']));
-  if (state.lastUpdateId) url.searchParams.set('offset', String(state.lastUpdateId));
+  if (telegramPollInFlight) return;
+  telegramPollInFlight = true;
 
-  const controller = new AbortController();
-  const timeout = setTimeout(() => controller.abort(), TELEGRAM_FETCH_TIMEOUT_MS);
-  const response = await fetch(url, { signal: controller.signal })
-    .finally(() => clearTimeout(timeout));
-  if (!response.ok) {
-    throw new Error(`Telegram polling failed with HTTP ${response.status}`);
-  }
+  try {
+    const state = await ensureTelegramState();
+    const url = new URL(getTelegramApiUrl('getUpdates'));
+    url.searchParams.set('timeout', String(TELEGRAM_LONG_POLL_TIMEOUT_SECONDS));
+    url.searchParams.set('allowed_updates', JSON.stringify(['message', 'edited_message']));
+    if (state.lastUpdateId) url.searchParams.set('offset', String(state.lastUpdateId));
 
-  const payload = await response.json();
-  const results = payload?.result || [];
-  for (const update of results) {
-    state.lastUpdateId = Math.max(state.lastUpdateId, (update.update_id || 0) + 1);
-    await handleTelegramCommand(update);
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), TELEGRAM_FETCH_TIMEOUT_MS);
+    const response = await fetch(url, { signal: controller.signal })
+      .finally(() => clearTimeout(timeout));
+    if (!response.ok) {
+      let description = '';
+      try {
+        const payload = await response.json();
+        description = payload?.description || '';
+      } catch {
+        description = '';
+      }
+      if (response.status === 409) {
+        throw new Error(`Telegram polling conflict: another getUpdates consumer is active for this bot. ${description}`.trim());
+      }
+      throw new Error(`Telegram polling failed with HTTP ${response.status}${description ? `: ${description}` : ''}`);
+    }
+
+    const payload = await response.json();
+    const results = payload?.result || [];
+    for (const update of results) {
+      state.lastUpdateId = Math.max(state.lastUpdateId, (update.update_id || 0) + 1);
+      await handleTelegramCommand(update);
+    }
+    if (results.length > 0) await persistTelegramState();
+  } finally {
+    telegramPollInFlight = false;
   }
-  if (results.length > 0) await persistTelegramState();
 }
 
-function startTelegramPolling() {
-  if (telegramPollStarted || !TELEGRAM_BOT_TOKEN) return;
+async function startTelegramPolling() {
+  if (telegramPollStarted || !TELEGRAM_BOT_TOKEN || !TELEGRAM_POLLING_ENABLED) return;
   telegramPollStarted = true;
 
-  const tick = async () => {
+  while (telegramPollStarted) {
     try {
       await pollTelegramOnce();
     } catch (error) {
       console.error('[telegram-panel] error:', error?.message, '| cause:', error?.cause, '| stack:', error?.stack?.split('\n').slice(0, 4).join(' | '));
-    } finally {
-      telegramPollTimer = setTimeout(tick, TELEGRAM_POLL_INTERVAL_MS);
     }
-  };
-
-  tick();
+    await delay(TELEGRAM_POLL_INTERVAL_MS);
+  }
 }
 
 const app = express();
@@ -1039,7 +1060,7 @@ app.get('/api/system', async (_request, response) => {
 
 const server = app.listen(PORT, () => {
   console.log(`TV info panel running at http://localhost:${PORT}`);
-  startTelegramPolling();
+  void startTelegramPolling();
 });
 
 server.keepAliveTimeout = 65_000;

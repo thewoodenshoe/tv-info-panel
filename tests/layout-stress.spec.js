@@ -2,7 +2,7 @@ import { test, expect } from '@playwright/test';
 
 import { mockDashboardApis } from './fixtures/api.js';
 
-const layouts = ['daylight', 'midnight', 'pastel', 'paper', 'neon'];
+const layouts = ['midnight', 'pastel', 'neon', 'retro'];
 const visibleSelectors = [
   '#dashboard-title',
   '#layout-name',
@@ -26,7 +26,7 @@ for (const layout of layouts) {
     await page.goto('/');
 
     await page.evaluate((layoutName) => {
-      const layoutsInOrder = ['daylight', 'midnight', 'pastel', 'paper', 'neon'];
+      const layoutsInOrder = ['midnight', 'pastel', 'neon', 'retro'];
       localStorage.setItem('tv-info-layout-index', String(layoutsInOrder.indexOf(layoutName)));
     }, layout);
     await page.reload();

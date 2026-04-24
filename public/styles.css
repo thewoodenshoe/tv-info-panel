@@ -2147,10 +2147,10 @@ body[data-layout="neon"] {
 }
 
 /* =============================================================
-   2026 TV fit + five-board composition pass.
+   2026 TV fit + board composition pass.
    This final layer intentionally overrides earlier experiments:
    fixed TV typography, workweek calendar rows, compact market tiles,
-   and five visually distinct board compositions.
+   and visually distinct board compositions.
    ============================================================= */
 
 body[data-display="tv"] {
@@ -3192,5 +3192,168 @@ body[data-display="tv"][data-layout="paper"] #panel-time .timezone-clocks {
 }
 
 body[data-display="tv"][data-layout="paper"] #panel-weather .weather-summary div:last-child {
+  display: none;
+}
+
+/* Final active-board overrides: Home View and Agenda Wall are retired from
+   rotation; Market Map, Coastal Outlook, Night Operations, and Retro Console
+   are the intended TV boards. */
+
+body[data-layout="pastel"] {
+  --canvas-bg:
+    radial-gradient(circle at 18% 8%, rgba(255,255,255,0.72), transparent 24%),
+    radial-gradient(circle at 88% 12%, rgba(186,230,253,0.84), transparent 28%),
+    linear-gradient(145deg, #cfeeff 0%, #e4f6ff 46%, #d8ecff 100%);
+}
+
+body[data-layout="retro"] {
+  --hue-time: #7dd3fc;
+  --hue-weather: #facc15;
+  --hue-stocks: #22c55e;
+  --hue-quotes: #fb923c;
+  --hue-telegram: #f472b6;
+  --hue-calendar: #a3e635;
+  --canvas-bg:
+    radial-gradient(circle at 50% 18%, rgba(132,204,22,0.16), transparent 28%),
+    repeating-linear-gradient(0deg, rgba(255,255,255,0.035) 0 1px, transparent 1px 4px),
+    linear-gradient(135deg, #121008 0%, #05130b 48%, #020403 100%);
+  --canvas-ink: #fef3c7;
+  --canvas-muted: rgba(254,243,199,0.62);
+  --topbar-bg: rgba(0,0,0,0.22);
+  --divider: rgba(163,230,53,0.2);
+  --panel-bg: rgba(8, 20, 12, 0.88);
+  --panel-ink: #fff7d6;
+  --panel-muted: rgba(254,243,199,0.64);
+  --panel-border: rgba(250,204,21,0.34);
+  --panel-radius: 10px;
+  --panel-shadow: 0 20px 58px -32px rgba(0,0,0,0.95), inset 0 0 0 1px rgba(255,255,255,0.04);
+  --chip-bg: rgba(250,204,21,0.08);
+  --chip-border: rgba(250,204,21,0.24);
+  --button-bg: #1f2937;
+  --button-border: rgba(250,204,21,0.42);
+  --button-ink: #fef3c7;
+  --up: #86efac;
+  --down: #fb7185;
+  --warning: #fbbf24;
+  --weather-temp-color: #facc15;
+  font-family: "Courier New", "Lucida Console", monospace;
+  text-transform: none;
+}
+
+body[data-layout="retro"] .dashboard {
+  grid-template-columns: minmax(0, 1.05fr) minmax(0, 0.88fr) minmax(0, 0.88fr);
+  grid-template-rows: minmax(0, 0.82fr) minmax(0, 0.9fr) minmax(0, 0.72fr);
+  grid-template-areas:
+    "calendar time    stocks"
+    "calendar weather stocks"
+    "telegram quotes  quotes";
+}
+
+body[data-layout="retro"] .panel {
+  border: 1px solid var(--panel-border);
+  border-top: 4px double var(--hue);
+  background:
+    linear-gradient(180deg, rgba(255,255,255,0.045), transparent 34%),
+    var(--panel-bg);
+}
+
+body[data-layout="retro"] .panel-header h2 {
+  color: var(--hue);
+  text-shadow: 0 0 12px color-mix(in srgb, var(--hue) 42%, transparent);
+}
+
+body[data-layout="retro"] #panel-calendar {
+  background:
+    linear-gradient(180deg, rgba(163,230,53,0.11), transparent 36%),
+    rgba(5,18,10,0.9);
+}
+
+body[data-layout="retro"] #panel-stocks {
+  background:
+    linear-gradient(180deg, rgba(34,197,94,0.11), transparent 34%),
+    rgba(4,18,12,0.9);
+}
+
+body[data-layout="retro"] #panel-weather {
+  background:
+    linear-gradient(145deg, rgba(250,204,21,0.16), rgba(8,20,12,0.9));
+}
+
+body[data-layout="retro"] .stock-card,
+body[data-layout="retro"] .calendar-event,
+body[data-layout="retro"] .telegram-empty,
+body[data-layout="retro"] .telegram-item {
+  border-radius: 8px;
+}
+
+body[data-layout="retro"] .stock-label {
+  display: block;
+  font-size: 0.52rem;
+  line-height: 1;
+  white-space: normal;
+  overflow: visible;
+  overflow-wrap: anywhere;
+  word-break: break-word;
+}
+
+body[data-display="tv"][data-layout="retro"] .weather-details {
+  display: none;
+}
+
+body[data-layout="retro"] .stock-basis {
+  display: none;
+}
+
+body[data-display="tv"][data-layout="retro"] .dashboard {
+  grid-template-rows: minmax(0, 0.92fr) minmax(0, 0.84fr) minmax(0, 0.72fr);
+}
+
+body[data-display="tv"][data-layout="retro"] #panel-stocks .stocks-grid {
+  --stock-columns: 1;
+}
+
+body[data-display="tv"][data-layout="retro"] #panel-stocks .stock-card {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 6px;
+  min-height: 0;
+  padding: 4px 8px;
+}
+
+body[data-display="tv"][data-layout="retro"] #panel-stocks .stock-card-core {
+  align-items: flex-end;
+  justify-content: center;
+  gap: 0;
+  padding: 0;
+}
+
+body[data-display="tv"][data-layout="retro"] #panel-stocks .stock-card-top {
+  gap: 6px;
+}
+
+body[data-display="tv"][data-layout="retro"] #panel-stocks .stock-badge {
+  width: 7px;
+  height: 7px;
+  box-shadow: 0 0 0 2px color-mix(in srgb, var(--brand, var(--hue)) 18%, transparent);
+}
+
+body[data-display="tv"][data-layout="retro"] #panel-stocks .stock-label,
+body[data-display="tv"][data-layout="retro"] #panel-stocks .stock-extended,
+body[data-display="tv"][data-layout="retro"] #panel-stocks .stock-change {
+  display: none;
+}
+
+body[data-display="tv"][data-layout="retro"] #panel-stocks .stock-symbol {
+  font-size: 11px;
+  line-height: 1;
+}
+
+body[data-display="tv"][data-layout="retro"] #panel-stocks .stock-price {
+  font-size: 15px;
+  line-height: 1;
+}
+
+body[data-display="tv"] .calendar-sources {
   display: none;
 }

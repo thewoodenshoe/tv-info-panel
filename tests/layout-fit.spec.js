@@ -3,7 +3,7 @@ import { test, expect } from '@playwright/test';
 import { mockDashboardApis } from './fixtures/api.js';
 import { expectNoClip } from './helpers/assertions.js';
 
-const layouts = ['daylight', 'midnight', 'pastel', 'paper', 'neon'];
+const layouts = ['midnight', 'pastel', 'neon', 'retro'];
 const viewports = [
   { width: 1920, height: 1080 },
   { width: 1366, height: 768 },
@@ -18,7 +18,7 @@ for (const viewport of viewports) {
       await page.goto('/');
 
       await page.evaluate((layoutName) => {
-        const layoutsInOrder = ['daylight', 'midnight', 'pastel', 'paper', 'neon'];
+        const layoutsInOrder = ['midnight', 'pastel', 'neon', 'retro'];
         localStorage.setItem('tv-info-layout-index', String(layoutsInOrder.indexOf(layoutName)));
       }, layout);
       await page.reload();

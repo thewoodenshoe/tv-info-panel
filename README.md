@@ -21,7 +21,7 @@ The tracked repo ships with safe sample data. Personal calendars and other priva
 - Combined agenda panel with server-fed calendar events
 - Telegram-controlled task / reminder panel
 - Quote of the day + Bible quote
-- Five switchable visual layouts from the on-screen `Next layout` button
+- Four switchable visual layouts from the on-screen `Next layout` button
 
 ## Local Run
 
@@ -106,6 +106,7 @@ Environment variables:
 ```bash
 TELEGRAM_BOT_TOKEN="bot token here"
 TELEGRAM_ALLOWED_CHAT_IDS="123456789,987654321"
+TELEGRAM_POLLING_ENABLED=true
 ```
 
 Commands:
@@ -122,6 +123,7 @@ Important:
 - keep `TELEGRAM_BOT_TOKEN` only in the local / Ubuntu `.env`
 - never commit the token
 - `TELEGRAM_ALLOWED_CHAT_IDS` is optional; if blank, any chat that reaches the bot can manage the board
+- only one running server can poll a Telegram bot token; set `TELEGRAM_POLLING_ENABLED=false` in local `.env` if Ubuntu is the production poller
 
 ## Editable Config
 
