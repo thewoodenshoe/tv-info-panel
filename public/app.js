@@ -1,4 +1,5 @@
 const dashboardTitle = document.querySelector('#dashboard-title');
+const dashboardVersion = document.querySelector('#dashboard-version');
 const clock = document.querySelector('#clock');
 const dateLabel = document.querySelector('#date');
 const workdayCountdown = document.querySelector('#workday-countdown');
@@ -25,13 +26,16 @@ const LAYOUTS = [
 ];
 
 const STOCK_BRAND_COLORS = {
-  MSTR: '#2563eb',
+  BTC: '#f7931a',
   'BTC-USD': '#f7931a',
-  'ETH-USD': '#627eea',
+  ASST: '#14b8a6',
+  SOL: '#9945ff',
+  'SOL-USD': '#9945ff',
+  ETL: '#2563eb',
+  'ETL.PA': '#2563eb',
 };
 function getStockBrandColor(symbol = '') {
   if (STOCK_BRAND_COLORS[symbol]) return STOCK_BRAND_COLORS[symbol];
-  if (symbol.startsWith('MSTR')) return '#10b981';
   return '#64748b';
 }
 
@@ -462,6 +466,29 @@ function formatSigned(value, digits = 2) {
   return `${sign}${Number(value).toFixed(digits)}`;
 }
 
+function getPrimaryQuoteMetrics(quote) {
+  const marketState = `${quote.marketState || ''}`.toUpperCase();
+  if ((marketState === 'PRE' || marketState === 'PREPRE') && quote.preMarketPrice != null) {
+    return {
+      price: quote.preMarketPrice,
+      change: quote.preMarketChange,
+      percentChange: quote.preMarketChangePercent,
+    };
+  }
+  if ((marketState === 'POST' || marketState === 'POSTPOST') && quote.postMarketPrice != null) {
+    return {
+      price: quote.postMarketPrice,
+      change: quote.postMarketChange,
+      percentChange: quote.postMarketChangePercent,
+    };
+  }
+  return {
+    price: quote.price,
+    change: quote.dayChange,
+    percentChange: quote.dayPercentChange,
+  };
+}
+
 function getStockSessionBadge(quote) {
   const marketState = `${quote.marketState || ''}`.toUpperCase();
   if (marketState === 'PRE' || marketState === 'PREPRE') {
@@ -504,11 +531,12 @@ function renderStocks(stocks) {
   const grid = document.querySelector('#stocks-grid');
   grid.innerHTML = stocks.quotes
     .map((quote) => {
-      const brandColor = getStockBrandColor(quote.symbol);
-      const state = quote.dayChange > 0 ? 'is-up' : quote.dayChange < 0 ? 'is-down' : 'is-flat';
+      const primary = getPrimaryQuoteMetrics(quote);
+      const brandColor = getStockBrandColor(quote.quoteSymbol || quote.symbol);
+      const state = primary.change > 0 ? 'is-up' : primary.change < 0 ? 'is-down' : 'is-flat';
       const basisState = quote.basisChange > 0 ? 'is-up' : quote.basisChange < 0 ? 'is-down' : 'is-flat';
       const fallbackLabel = quote.isFallback ? ' · Demo' : '';
-      const arrow = quote.dayChange > 0 ? '▲' : quote.dayChange < 0 ? '▼' : '·';
+      const arrow = primary.change > 0 ? '▲' : primary.change < 0 ? '▼' : '·';
       const sessionBadge = getStockSessionBadge(quote);
       const extendedLine = getExtendedMarketLine(quote);
       return `
@@ -522,11 +550,11 @@ function renderStocks(stocks) {
             ${sessionBadge}
           </header>
           <div class="stock-card-core">
-            <div class="stock-price ${state}">${formatMoney(quote.price)}</div>
+            <div class="stock-price ${state}">${formatMoney(primary.price)}</div>
             <div class="stock-change ${state}">
               <span class="stock-arrow">${arrow}</span>
-              <span class="stock-change-value">${formatSigned(quote.dayChange)}</span>
-              ${quote.dayPercentChange == null ? '' : `<span class="stock-change-percent">${formatSigned(quote.dayPercentChange)}%</span>`}
+              <span class="stock-change-value">${formatSigned(primary.change)}</span>
+              ${primary.percentChange == null ? '' : `<span class="stock-change-percent">${formatSigned(primary.percentChange)}%</span>`}
             </div>
             ${extendedLine}
           </div>
@@ -691,6 +719,7 @@ async function loadDashboard() {
 
     dashboardConfig = config;
     dashboardTitle.textContent = config.title;
+    if (dashboardVersion) dashboardVersion.textContent = config.version ? `v${config.version}` : '';
     syncDisplayMode();
     updateTimePanel();
     renderWeather(weather);

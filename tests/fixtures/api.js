@@ -1,5 +1,6 @@
 export const BASE_CONFIG = {
   title: "Paul's Office Panel",
+  version: '1.1.0',
   timezone: 'America/New_York',
   workdayEnd: '17:00:00',
   timeZones: [
@@ -34,151 +35,70 @@ export const STRESS_CONFIG = {
   ],
 };
 
-export const CALENDAR_FIXTURE = {
-  metaLabel: 'Next 7 days',
-  status: '',
-  mode: 'live',
-  events: [
-    {
-      id: 'evt-1',
-      title: 'Morning priorities review',
-      location: 'Office desk',
-      start: '2026-04-23T13:00:00.000Z',
-      end: '2026-04-23T13:30:00.000Z',
-      isAllDay: false,
-      calendarLabel: 'Paul',
-      color: '#69b3ff',
-    },
-    {
-      id: 'evt-2',
-      title: 'Client delivery call',
-      location: 'Zoom',
-      start: '2026-04-23T16:00:00.000Z',
-      end: '2026-04-23T17:00:00.000Z',
-      isAllDay: false,
-      calendarLabel: 'Alexa',
-      color: '#8b5cf6',
-    },
-    {
-      id: 'evt-3',
-      title: 'Family dinner',
-      location: 'Home',
-      start: '2026-04-23T22:00:00.000Z',
-      end: '2026-04-23T23:30:00.000Z',
-      isAllDay: false,
-      calendarLabel: 'Family',
-      color: '#22c55e',
-    },
-    {
-      id: 'evt-4',
-      title: 'Travel planning block',
-      location: 'Upstairs office',
-      start: '2026-04-24T14:00:00.000Z',
-      end: '2026-04-24T15:00:00.000Z',
-      isAllDay: false,
-      calendarLabel: 'Marc',
-      color: '#f97316',
-    },
-    {
-      id: 'evt-5',
-      title: 'Nicole school event',
-      location: 'Auditorium',
-      start: '2026-04-25T13:00:00.000Z',
-      end: '2026-04-25T15:00:00.000Z',
-      isAllDay: false,
-      calendarLabel: 'Nicole',
-      color: '#ec4899',
-    },
-    {
-      id: 'evt-6',
-      title: 'Project buffer',
-      location: '',
-      start: '2026-04-26T04:00:00.000Z',
-      end: '2026-04-26T04:00:00.000Z',
-      isAllDay: true,
-      calendarLabel: 'Paul',
-      color: '#69b3ff',
-    },
-  ],
-};
+function getCurrentMonday() {
+  const today = new Date();
+  const monday = new Date(today);
+  const day = monday.getDay();
+  // Match the dashboard: on weekends, show the forthcoming workweek.
+  const offset = day === 0 ? 1 : day === 6 ? 2 : 1 - day;
+  monday.setDate(monday.getDate() + offset);
+  monday.setHours(0, 0, 0, 0);
+  return monday;
+}
 
-export const CALENDAR_STRESS_FIXTURE = {
-  metaLabel: 'Next 7 days',
-  status: '2 calendar feeds unavailable right now.',
-  mode: 'live',
-  events: [
-    {
-      id: 'stress-1',
-      title: 'Review the Charleston office setup checklist before the A/V technician arrives',
-      location: 'Main office',
-      start: '2026-04-23T13:00:00.000Z',
-      end: '2026-04-23T13:45:00.000Z',
-      isAllDay: false,
-      calendarLabel: 'Personal Planning',
-      color: '#69b3ff',
-    },
-    {
-      id: 'stress-2',
-      title: 'Client delivery milestone handoff and follow-up notes',
-      location: 'Conference room B',
-      start: '2026-04-23T16:30:00.000Z',
-      end: '2026-04-23T17:30:00.000Z',
-      isAllDay: false,
-      calendarLabel: 'Client Delivery',
-      color: '#8b5cf6',
-    },
-    {
-      id: 'stress-3',
-      title: 'Family pickup coordination',
-      location: 'School loop',
-      start: '2026-04-23T19:30:00.000Z',
-      end: '2026-04-23T20:00:00.000Z',
-      isAllDay: false,
-      calendarLabel: 'Family Schedule',
-      color: '#22c55e',
-    },
-    {
-      id: 'stress-4',
-      title: 'Travel and logistics buffer block',
-      location: 'Airport planning',
-      start: '2026-04-24T14:00:00.000Z',
-      end: '2026-04-24T15:30:00.000Z',
-      isAllDay: false,
-      calendarLabel: 'Travel and Logistics',
-      color: '#f97316',
-    },
-    {
-      id: 'stress-5',
-      title: 'School and activities coordination window',
-      location: 'Gym',
-      start: '2026-04-24T19:00:00.000Z',
-      end: '2026-04-24T20:00:00.000Z',
-      isAllDay: false,
-      calendarLabel: 'School and Activities',
-      color: '#ec4899',
-    },
-    {
-      id: 'stress-6',
-      title: 'Quarterly planning review',
-      location: 'War room',
-      start: '2026-04-25T14:00:00.000Z',
-      end: '2026-04-25T15:30:00.000Z',
-      isAllDay: false,
-      calendarLabel: 'Client Delivery',
-      color: '#8b5cf6',
-    },
-    {
-      id: 'stress-7',
-      title: 'All-day reset and catch-up block',
-      location: '',
-      start: '2026-04-26T04:00:00.000Z',
-      end: '2026-04-26T04:00:00.000Z',
-      isAllDay: true,
-      calendarLabel: 'Personal Planning',
-      color: '#69b3ff',
-    },
-  ],
-};
+function atUtcFromMonday(monday, dayOffset, hour, minute = 0, durationMinutes = 60) {
+  const start = new Date(Date.UTC(
+    monday.getFullYear(),
+    monday.getMonth(),
+    monday.getDate() + dayOffset,
+    hour,
+    minute,
+    0,
+    0,
+  ));
+  const end = new Date(start.getTime() + durationMinutes * 60 * 1000);
+  return { start: start.toISOString(), end: end.toISOString() };
+}
+
+function buildCalendarFixture(stress = false) {
+  const monday = getCurrentMonday();
+  const first = atUtcFromMonday(monday, 0, 13, 0, 30);
+  const second = atUtcFromMonday(monday, 1, 16, 30, 60);
+  const third = atUtcFromMonday(monday, 2, 19, 30, 30);
+  const fourth = atUtcFromMonday(monday, 3, 14, 0, 90);
+  const fifth = atUtcFromMonday(monday, 4, 19, 0, 60);
+
+  if (!stress) {
+    return {
+      metaLabel: 'This workweek',
+      status: '',
+      mode: 'live',
+      events: [
+        { id: 'evt-1', title: 'Morning priorities review', location: 'Office desk', start: first.start, end: first.end, isAllDay: false, calendarLabel: 'Paul', color: '#69b3ff' },
+        { id: 'evt-2', title: 'Client delivery call', location: 'Zoom', start: second.start, end: second.end, isAllDay: false, calendarLabel: 'Alexa', color: '#8b5cf6' },
+        { id: 'evt-3', title: 'Family dinner', location: 'Home', start: third.start, end: third.end, isAllDay: false, calendarLabel: 'Family', color: '#22c55e' },
+        { id: 'evt-4', title: 'Travel planning block', location: 'Upstairs office', start: fourth.start, end: fourth.end, isAllDay: false, calendarLabel: 'Marc', color: '#f97316' },
+        { id: 'evt-5', title: 'Nicole school event', location: 'Auditorium', start: fifth.start, end: fifth.end, isAllDay: false, calendarLabel: 'Nicole', color: '#ec4899' },
+      ],
+    };
+  }
+
+  return {
+    metaLabel: 'This workweek',
+    status: '2 calendar feeds unavailable right now.',
+    mode: 'live',
+    events: [
+      { id: 'stress-1', title: 'Review the Charleston office setup checklist before the A/V technician arrives', location: 'Main office', start: first.start, end: first.end, isAllDay: false, calendarLabel: 'Personal Planning', color: '#69b3ff' },
+      { id: 'stress-2', title: 'Client delivery milestone handoff and follow-up notes', location: 'Conference room B', start: second.start, end: second.end, isAllDay: false, calendarLabel: 'Client Delivery', color: '#8b5cf6' },
+      { id: 'stress-3', title: 'Family pickup coordination', location: 'School loop', start: third.start, end: third.end, isAllDay: false, calendarLabel: 'Family Schedule', color: '#22c55e' },
+      { id: 'stress-4', title: 'Travel and logistics buffer block', location: 'Airport planning', start: fourth.start, end: fourth.end, isAllDay: false, calendarLabel: 'Travel and Logistics', color: '#f97316' },
+      { id: 'stress-5', title: 'School and activities coordination window', location: 'Gym', start: fifth.start, end: fifth.end, isAllDay: false, calendarLabel: 'School and Activities', color: '#ec4899' },
+    ],
+  };
+}
+
+export const CALENDAR_FIXTURE = buildCalendarFixture(false);
+export const CALENDAR_STRESS_FIXTURE = buildCalendarFixture(true);
 
 export const WEATHER_FIXTURE = {
   label: 'Charleston, SC',
