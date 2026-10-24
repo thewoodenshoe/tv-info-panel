@@ -95,6 +95,14 @@ body[data-density="compact"] .panel-header {
   min-width: 0;
 }
 
+.brand-version {
+  font-size: clamp(0.48rem, 0.62vw, 0.62rem);
+  letter-spacing: 0.24em;
+  text-transform: uppercase;
+  color: var(--canvas-muted);
+  font-weight: 600;
+}
+
 .brand-block .eyebrow {
   text-transform: uppercase;
   letter-spacing: 0.28em;

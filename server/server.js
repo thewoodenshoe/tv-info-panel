@@ -5,6 +5,7 @@ import { fileURLToPath } from 'node:url';
 import dotenv from 'dotenv';
 import express from 'express';
 import ical from 'node-ical';
+import packageJson from '../package.json' with { type: 'json' };
 
 dotenv.config();
 
@@ -18,6 +19,7 @@ const defaultTelegramStorePath = path.join(rootDir, 'data', 'telegram-panel.loca
 const legacyTelegramStorePath = path.join(rootDir, 'data', 'telegram-panel.json');
 
 const PORT = Number.parseInt(process.env.PORT || '3030', 10);
+const APP_VERSION = packageJson.version || '1.1.0';
 const TELEGRAM_POLL_INTERVAL_MS = 250;
 const TELEGRAM_LONG_POLL_TIMEOUT_SECONDS = 10;
 const TELEGRAM_FETCH_TIMEOUT_MS = 12_000;
@@ -31,10 +33,10 @@ const TELEGRAM_ALLOWED_CHAT_IDS = new Set(
 );
 
 const STOCK_SAMPLE = {
-  MSTR: { price: 1712.5, previousClose: 1688.2 },
   'BTC-USD': { price: 93450, previousClose: 92110 },
-  'ETH-USD': { price: 1798, previousClose: 1765 },
-  MSTR270617C00200000: { price: 94.2, previousClose: 90.4 },
+  ASST: { price: 2.18, previousClose: 2.05 },
+  'SOL-USD': { price: 198.5, previousClose: 191.3 },
+  'ETL.PA': { price: 4.12, previousClose: 4.21 },
 };
 
 const WEATHER_CODE_LABELS = {
@@ -804,6 +806,7 @@ async function getTelegramPanelData(config) {
 function createSystemData(config) {
   return {
     fetchedAt: new Date().toISOString(),
+    version: APP_VERSION,
     timezone: config.timezone,
     location: config.location.label,
     tideStation: config.tide?.label || '',
@@ -990,6 +993,7 @@ app.get('/api/config', async (_request, response) => {
     const safeCalendars = getSafeCalendars(config);
 
     response.json({
+      version: APP_VERSION,
       title: config.title,
       notes: config.notes,
       timezone: config.timezone,
